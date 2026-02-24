@@ -4,7 +4,17 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(npm show:*)",
-      "Bash(sleep 4:*)"
+      "Bash(sleep 4:*)",
+      "Bash(which npx:*)",
+      "WebSearch",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(head:*)",
+      "Bash(grep:*)",
+      "Bash(npx:*)",
+      "WebFetch(domain:context7.com)",
+      "WebFetch(domain:zod.dev)",
+      "Bash(cd:*)"
     ]
   }
 }

@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  user
+}
+
+enum RoleType {
+  full_time
+  part_time
+  hybrid
+  remote
+}
+
+model Company {
+  id           Int      @id @default(autoincrement())
+  name         String
+  slug         String   @unique
+  description  String?
+  heroImageUrl String?
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users        User[]
+  roles        Role[]
+  applications Application[]
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  companyId    Int
+  name         String
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(user)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company       Company        @relation(fields: [companyId], references: [id])
+  roles         Role[]
+  refreshTokens RefreshToken[]
+}
+
+model Role {
+  id              Int      @id @default(autoincrement())
+  companyId       Int
+  createdByUserId Int
+  name            String
+  description     String?
+  location        String?
+  type            RoleType
+  seniorityLevel  String?
+  requirements    String[]
+  isActive        Boolean  @default(true)
+  customFields    Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  createdBy    User          @relation(fields: [createdByUserId], references: [id])
+  stages       Stage[]
+  applications Application[]
+}
+
+model Stage {
+  id        Int      @id @default(autoincrement())
+  roleId    Int
+  name      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role         Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  applications Application[]
+}
+
+model Application {
+  id             Int      @id @default(autoincrement())
+  roleId         Int
+  companyId      Int
+  currentStageId Int?
+  formData       Json     @default("{}")
+  resumeS3Key    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  role         Role    @relation(fields: [roleId], references: [id])
+  company      Company @relation(fields: [companyId], references: [id])
+  currentStage Stage?  @relation(fields: [currentStageId], references: [id], onDelete: SetNull)
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
