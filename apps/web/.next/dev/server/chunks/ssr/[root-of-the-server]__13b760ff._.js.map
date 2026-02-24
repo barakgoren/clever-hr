@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///Users/barakgoren/Desktop/frontend/claude-code-test/apps/web/src/app/page.tsx"],"sourcesContent":["import type { ApiResponse, HealthResponse } from '@repo/shared';\n\nexport default function Home() {\n  const example: ApiResponse<HealthResponse> = {\n    success: true,\n    data: { status: 'ok', timestamp: new Date().toISOString() },\n  };\n\n  return (\n    <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>\n      <h1>Monorepo App</h1>\n      <p>Next.js frontend is running.</p>\n      <p>\n        API health check:{' '}\n        <a href=\"http://localhost:3001/api/health\">\n          http://localhost:3001/api/health\n        </a>\n      </p>\n      <pre style={{ background: '#f4f4f4', padding: '1rem', borderRadius: '4px' }}>\n        {JSON.stringify(example, null, 2)}\n      </pre>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAEe,SAAS;IACtB,MAAM,UAAuC;QAC3C,SAAS;QACT,MAAM;YAAE,QAAQ;YAAM,WAAW,IAAI,OAAO,WAAW;QAAG;IAC5D;IAEA,qBACE,8OAAC;QAAK,OAAO;YAAE,SAAS;YAAQ,YAAY;QAAa;;0BACvD,8OAAC;0BAAG;;;;;;0BACJ,8OAAC;0BAAE;;;;;;0BACH,8OAAC;;oBAAE;oBACiB;kCAClB,8OAAC;wBAAE,MAAK;kCAAmC;;;;;;;;;;;;0BAI7C,8OAAC;gBAAI,OAAO;oBAAE,YAAY;oBAAW,SAAS;oBAAQ,cAAc;gBAAM;0BACvE,KAAK,SAAS,CAAC,SAAS,MAAM;;;;;;;;;;;;AAIvC"}}]
+}
