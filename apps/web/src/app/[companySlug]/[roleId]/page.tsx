@@ -115,11 +115,12 @@ export default function RoleDetailPage() {
   const [error, setError] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
 
-  const { data: company } = useQuery({
+  const { data: companyData } = useQuery({
     queryKey: ['public', 'company', companySlug],
     queryFn: () => publicService.getCompany(companySlug),
     retry: 1,
   });
+  const company = companyData?.company;
 
   const { data: role, isLoading } = useQuery({
     queryKey: ['public', 'role', companySlug, roleId],

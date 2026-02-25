@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Building2, Bell, ShieldCheck, Database, RefreshCw, ImageIcon } from 'lucide-react';
 import { companyService } from '@/services/company.service';
@@ -69,6 +69,12 @@ function CompanyTab({ company }: { company: Company }) {
     queryKey: ['users'],
     queryFn: userService.list,
   });
+
+  useEffect(() => {
+    if (users.length > 0) {
+      setSelectedAdminIds(users.filter((u) => u.role === 'admin').map((u) => u.id));
+    }
+  }, [users]);
 
   const updateMutation = useMutation({
     mutationFn: () => companyService.update({ name }),

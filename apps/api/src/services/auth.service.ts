@@ -59,7 +59,17 @@ export const authService = {
       data: { userId: stored.user.id, token: newRefreshToken, expiresAt },
     });
 
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: stored.user.id,
+        name: stored.user.name,
+        email: stored.user.email,
+        role: stored.user.role,
+        companyId: stored.user.companyId,
+      },
+    };
   },
 
   async logout(refreshTokenValue: string) {

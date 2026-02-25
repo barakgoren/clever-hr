@@ -1,9 +1,16 @@
 import { apiClient, setAccessToken, clearAccessToken } from '@/lib/api';
 import type { User } from '@repo/shared';
 
+type AuthUser = Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'>;
+
 interface LoginResponse {
   accessToken: string;
-  user: Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'>;
+  user: AuthUser;
+}
+
+interface RefreshResponse {
+  accessToken: string;
+  user: AuthUser;
 }
 
 export const authService = {
@@ -18,11 +25,11 @@ export const authService = {
     clearAccessToken();
   },
 
-  async refresh(): Promise<string | null> {
+  async refresh(): Promise<RefreshResponse | null> {
     try {
       const { data } = await apiClient.post('/api/auth/refresh');
       setAccessToken(data.data.accessToken);
-      return data.data.accessToken;
+      return data.data;
     } catch {
       clearAccessToken();
       return null;
