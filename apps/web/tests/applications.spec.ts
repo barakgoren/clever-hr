@@ -6,7 +6,7 @@ test('applications list renders with correct columns', async ({ page }) => {
 
   // Header row / column labels should be present
   await expect(page.getByText(/applicant|name/i).first()).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText(/role/i).first()).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByText(/application|type/i).first()).toBeVisible({ timeout: 5_000 });
   await expect(page.getByText(/date|applied/i).first()).toBeVisible({ timeout: 5_000 });
 });
 

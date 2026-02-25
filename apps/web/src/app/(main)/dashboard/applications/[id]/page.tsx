@@ -214,6 +214,8 @@ export default function ApplicationDetailPage() {
   );
 
   const fileFields = role?.customFields.filter((f) => f.type === "file") ?? [];
+  console.log({ role, application });
+
   const hasResume = application.resumeS3Key;
 
   const formatDateTime = (value: string) =>
@@ -520,7 +522,9 @@ export default function ApplicationDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {emailHistory.length === 0 ? (
-            <p className="text-sm text-[var(--color-text-muted)]">No emails sent yet.</p>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              No emails sent yet.
+            </p>
           ) : (
             emailHistory.map((mail) => {
               const isFailed = mail.status === "failed";
@@ -556,7 +560,9 @@ export default function ApplicationDetailPage() {
                   key={mail.id}
                   className={`relative overflow-hidden rounded-[var(--radius)] bg-white ${tone.border} ring-1 ring-inset ring-white/50 ${tone.glow}`}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-r ${tone.accent} opacity-90`} />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r ${tone.accent} opacity-90`}
+                  />
                   <div className="relative p-4 space-y-3">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white shadow-sm">
@@ -571,7 +577,9 @@ export default function ApplicationDetailPage() {
                           <span
                             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tone.chip}`}
                           >
-                            <span className={`h-2 w-2 rounded-full ${tone.dot}`} />
+                            <span
+                              className={`h-2 w-2 rounded-full ${tone.dot}`}
+                            />
                             {tone.label}
                           </span>
                           {mail.templateId && (
