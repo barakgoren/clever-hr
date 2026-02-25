@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Plus, Eye, Pencil } from 'lucide-react';
 import { roleService } from '@/services/role.service';
+import { companyService } from '@/services/company.service';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -16,6 +17,11 @@ export default function TemplatesPage() {
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
     queryFn: roleService.list,
+  });
+
+  const { data: company } = useQuery({
+    queryKey: ['company'],
+    queryFn: companyService.get,
   });
 
   const toggleMutation = useMutation({
@@ -108,7 +114,7 @@ export default function TemplatesPage() {
 
               <div className="border-t border-[var(--color-border)] grid grid-cols-2 divide-x divide-[var(--color-border)]">
                 <Link
-                  href={`/${role.id}`}
+                  href={company ? `/${company.slug}/${role.id}` : '#'}
                   className="flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)] transition-colors rounded-bl-[var(--radius-lg)]"
                 >
                   <Eye className="h-3.5 w-3.5" />
