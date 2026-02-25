@@ -23,6 +23,7 @@ export interface ApplicationWithRelations extends Application {
   role: {
     id: number;
     name: string;
+    color: string;
   };
   currentStage: {
     id: number;

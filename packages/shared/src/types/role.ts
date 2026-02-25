@@ -27,6 +27,7 @@ export interface Role {
   companyId: number;
   createdByUserId: number;
   name: string;
+  color: string;
   description: string | null;
   location: string | null;
   type: RoleType;

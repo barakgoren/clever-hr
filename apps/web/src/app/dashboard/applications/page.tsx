@@ -162,7 +162,13 @@ export default function ApplicationsPage() {
                       {fullName}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="default">{app.role.name}</Badge>
+                      <span
+                        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                        style={{ backgroundColor: `${app.role.color}1A`, color: app.role.color }}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: app.role.color }} />
+                        {app.role.name}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       {app.currentStage ? (

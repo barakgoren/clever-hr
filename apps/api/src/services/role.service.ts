@@ -2,6 +2,15 @@ import prisma from '../lib/prisma';
 import { AppError } from '../middleware/errorHandler';
 import { CreateRoleInput, UpdateRoleInput, CustomField } from '@repo/shared';
 
+const ROLE_COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+  '#eab308', '#22c55e', '#14b8a6', '#0ea5e9', '#3b82f6',
+];
+
+function pickRoleColor(): string {
+  return ROLE_COLORS[Math.floor(Math.random() * ROLE_COLORS.length)];
+}
+
 const SYSTEM_FIELDS: CustomField[] = [
   { id: 'full_name', label: 'Full Name', type: 'text', required: true, system: true },
   { id: 'email', label: 'Email', type: 'email', required: true, system: true },
@@ -43,6 +52,7 @@ export const roleService = {
         companyId,
         createdByUserId: userId,
         name: data.name,
+        color: pickRoleColor(),
         description: data.description ?? null,
         location: data.location ?? null,
         type: data.type,

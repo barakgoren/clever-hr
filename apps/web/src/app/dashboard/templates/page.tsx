@@ -66,10 +66,13 @@ export default function TemplatesPage() {
           {roles.map((role) => (
             <div
               key={role.id}
-              className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white shadow-sm flex flex-col"
+              className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white shadow-sm flex flex-col overflow-hidden"
             >
+              {/* Color accent bar */}
+              <div className="h-1 w-full shrink-0" style={{ backgroundColor: role.color }} />
               <div className="flex items-start justify-between p-5 pb-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: role.color }} />
                   <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
                     {role.name}
                   </h3>
