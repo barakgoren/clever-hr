@@ -19,6 +19,7 @@ export interface CustomField {
   required?: boolean;
   placeholder?: string;
   options?: string[];
+  system?: boolean;
 }
 
 export interface Role {

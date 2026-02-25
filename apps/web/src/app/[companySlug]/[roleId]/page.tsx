@@ -136,8 +136,15 @@ export default function RoleDetailPage() {
       const fd = new FormData(e.currentTarget);
       await publicService.submitApplication(companySlug, Number(roleId), fd);
       setSubmitted(true);
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      // Surface the API error message when available (e.g. duplicate 409)
+      const axiosErr = err as { response?: { data?: { error?: string }; status?: number } };
+      const apiMessage = axiosErr?.response?.data?.error;
+      if (apiMessage) {
+        setError(apiMessage);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -267,21 +274,7 @@ export default function RoleDetailPage() {
             {/* Right: Application form */}
             <div>
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-                {/* Always-present fields */}
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-slate-700">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="full_name"
-                    required
-                    placeholder="Enter your full name"
-                    className="w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                {/* Custom fields */}
+                {/* All fields (system + custom) */}
                 {role.customFields.map((field) => (
                   <FormField
                     key={field.id}

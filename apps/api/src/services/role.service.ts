@@ -1,6 +1,22 @@
 import prisma from '../lib/prisma';
 import { AppError } from '../middleware/errorHandler';
-import { CreateRoleInput, UpdateRoleInput } from '@repo/shared';
+import { CreateRoleInput, UpdateRoleInput, CustomField } from '@repo/shared';
+
+const SYSTEM_FIELDS: CustomField[] = [
+  { id: 'full_name', label: 'Full Name', type: 'text', required: true, system: true },
+  { id: 'email', label: 'Email', type: 'email', required: true, system: true },
+];
+
+function ensureSystemFields(customFields: CustomField[]): CustomField[] {
+  const submittedById = new Map(customFields.map((f) => [f.id, f]));
+  // Preserve label edits made by the user; always keep system: true and required: true
+  const systemFields = SYSTEM_FIELDS.map((def) => {
+    const submitted = submittedById.get(def.id);
+    return submitted ? { ...def, label: submitted.label } : def;
+  });
+  const nonSystemFields = customFields.filter((f) => !SYSTEM_FIELDS.some((s) => s.id === f.id));
+  return [...systemFields, ...nonSystemFields];
+}
 
 export const roleService = {
   async list(companyId: number) {
@@ -21,6 +37,7 @@ export const roleService = {
   },
 
   async create(companyId: number, userId: number, data: CreateRoleInput) {
+    const customFields = ensureSystemFields(data.customFields as CustomField[]);
     return prisma.role.create({
       data: {
         companyId,
@@ -31,7 +48,7 @@ export const roleService = {
         type: data.type,
         seniorityLevel: data.seniorityLevel ?? null,
         requirements: data.requirements,
-        customFields: data.customFields as object[],
+        customFields: customFields as object[],
       },
       include: { stages: true },
     });
@@ -39,11 +56,14 @@ export const roleService = {
 
   async update(id: number, companyId: number, data: UpdateRoleInput) {
     await this.getById(id, companyId);
+    const customFields = data.customFields
+      ? ensureSystemFields(data.customFields as CustomField[])
+      : undefined;
     return prisma.role.update({
       where: { id },
       data: {
         ...data,
-        customFields: data.customFields ? (data.customFields as object[]) : undefined,
+        customFields: customFields ? (customFields as object[]) : undefined,
       },
       include: { stages: { orderBy: { order: 'asc' } } },
     });

@@ -18,6 +18,7 @@ const customFieldSchema = z.object({
   required: z.boolean().optional(),
   placeholder: z.string().optional(),
   options: z.array(z.string()).optional(),
+  system: z.boolean().optional(),
 });
 
 const roleTypeSchema = z.enum(['full_time', 'part_time', 'hybrid', 'remote']);

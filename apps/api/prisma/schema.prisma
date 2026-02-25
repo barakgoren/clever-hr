@@ -92,6 +92,7 @@ model Application {
   roleId         Int
   companyId      Int
   currentStageId Int?
+  email          String?
   formData       Json     @default("{}")
   resumeS3Key    String?
   createdAt      DateTime @default(now())
@@ -101,6 +102,8 @@ model Application {
   company      Company @relation(fields: [companyId], references: [id])
   currentStage Stage?  @relation(fields: [currentStageId], references: [id], onDelete: SetNull)
   timeline     ApplicationTimeline[]
+
+  @@unique([roleId, email])
 }
 
 model ApplicationTimeline {

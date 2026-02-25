@@ -45,9 +45,17 @@ export const applicationService = {
     formData: Record<string, string | boolean>,
     file?: { buffer: Buffer; originalname: string; mimetype: string }
   ) {
+    const email = typeof formData.email === 'string' ? formData.email.toLowerCase().trim() : null;
+
+    // Enforce one application per email per role
+    if (email) {
+      const existing = await prisma.application.findFirst({ where: { roleId, email } });
+      if (existing) throw new AppError(409, 'An application with this email already exists for this role.');
+    }
+
     // Create application first to get ID
     const application = await prisma.application.create({
-      data: { roleId, companyId, formData },
+      data: { roleId, companyId, email, formData },
     });
 
     // Upload resume if provided

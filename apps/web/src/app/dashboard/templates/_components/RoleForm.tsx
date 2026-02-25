@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -19,6 +19,7 @@ import {
   Trash2,
   X,
   Settings,
+  Lock,
 } from "lucide-react";
 import { roleService } from "@/services/role.service";
 import { stageService } from "@/services/stage.service";
@@ -83,6 +84,16 @@ const STAGE_ICONS = [
   { value: "settings", label: "Settings", Icon: Settings },
 ];
 
+const SYSTEM_FIELDS: CustomField[] = [
+  { id: "full_name", label: "Full Name", type: "text", required: true, system: true },
+  { id: "email", label: "Email", type: "email", required: true, system: true },
+];
+
+function withSystemFields(customFields: CustomField[]): CustomField[] {
+  const nonSystem = customFields.filter((f) => !f.system);
+  return [...SYSTEM_FIELDS, ...nonSystem];
+}
+
 function newField(): CustomField {
   return { id: crypto.randomUUID().slice(0, 8), label: "", type: "text" };
 }
@@ -99,7 +110,7 @@ export function RoleForm({ role }: { role?: Role }) {
     seniorityLevel: role?.seniorityLevel ?? "",
     requirements: role?.requirements ?? [],
     isActive: role?.isActive ?? true,
-    customFields: role?.customFields ?? [],
+    customFields: withSystemFields(role?.customFields ?? []),
   });
 
   const [requirementInput, setRequirementInput] = useState("");
@@ -117,11 +128,11 @@ export function RoleForm({ role }: { role?: Role }) {
     queryKey: ["stages", role?.id],
     queryFn: () => stageService.list(role!.id),
     enabled: !!role,
-    initialData: role?.stages,
+    initialData: role?.stages ?? [],
   });
 
   useEffect(() => {
-    if (!stages) return;
+    if (!stages.length) return;
     setStageDrafts(
       Object.fromEntries(
         stages.map((s) => [
@@ -350,23 +361,19 @@ export function RoleForm({ role }: { role?: Role }) {
           <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
             Type
           </label>
-          <Select
+          <select
             value={form.type}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, type: v as RoleType }))
+            onChange={(e) =>
+              setForm((f) => ({ ...f, type: e.target.value as RoleType }))
             }
+            className="flex h-9 w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent"
           >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROLE_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {ROLE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <Input
@@ -482,17 +489,27 @@ export function RoleForm({ role }: { role?: Role }) {
           </Button>
         </div>
 
-        {form.customFields.length === 0 ? (
-          <p className="text-sm text-[var(--color-text-muted)] text-center py-4">
+        {form.customFields.filter((f) => !f.system).length === 0 && (
+          <p className="text-sm text-[var(--color-text-muted)] text-center py-2">
             No custom fields yet. Add fields to customize your application form.
           </p>
-        ) : (
-          <div className="space-y-2">
-            {form.customFields.map((field, idx) => (
-              <div
-                key={field.id}
-                className="flex items-center gap-2 rounded-[var(--radius)] border border-[var(--color-border)] px-3 py-2"
-              >
+        )}
+        <div className="space-y-2">
+          {form.customFields.map((field, idx) => (
+            <div
+              key={field.id}
+              className={`flex items-center gap-2 rounded-[var(--radius)] border px-3 py-2 ${
+                field.system
+                  ? "border-[var(--color-brand-200)] bg-[var(--color-brand-50)]"
+                  : "border-[var(--color-border)]"
+              }`}
+            >
+              {field.system ? (
+                <span className="w-40 flex items-center gap-1.5 text-xs font-mono text-[var(--color-brand-600)] select-none">
+                  <Lock className="h-3 w-3 shrink-0" />
+                  {field.id}
+                </span>
+              ) : (
                 <input
                   type="text"
                   value={field.id}
@@ -500,13 +517,19 @@ export function RoleForm({ role }: { role?: Role }) {
                   placeholder="field_id"
                   className="w-40 rounded border border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-2 py-1 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
                 />
-                <input
-                  type="text"
-                  value={field.label}
-                  onChange={(e) => updateField(idx, { label: e.target.value })}
-                  placeholder="Display Label"
-                  className="flex-1 rounded border border-[var(--color-border)] bg-white px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
-                />
+              )}
+              <input
+                type="text"
+                value={field.label}
+                onChange={(e) => updateField(idx, { label: e.target.value })}
+                placeholder="Display Label"
+                className="flex-1 rounded border border-[var(--color-border)] bg-white px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
+              />
+              {field.system ? (
+                <span className="w-28 h-8 flex items-center justify-center text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-subtle)] rounded border border-[var(--color-border)] select-none">
+                  {field.type}
+                </span>
+              ) : (
                 <Select
                   value={field.type}
                   onValueChange={(v) =>
@@ -524,6 +547,12 @@ export function RoleForm({ role }: { role?: Role }) {
                     ))}
                   </SelectContent>
                 </Select>
+              )}
+              {field.system ? (
+                <span className="h-8 w-8 flex items-center justify-center text-[var(--color-brand-600)]" title="System field — cannot be removed">
+                  <Lock className="h-3.5 w-3.5" />
+                </span>
+              ) : (
                 <button
                   type="button"
                   onClick={() => removeField(idx)}
@@ -531,10 +560,10 @@ export function RoleForm({ role }: { role?: Role }) {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Pipeline Stages */}
