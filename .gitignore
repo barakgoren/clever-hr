@@ -41,3 +41,7 @@ playwright-screenshots/
 apps/web/tests/.auth/
 apps/web/playwright-report/
 apps/web/test-results/
+
+# Test report artifacts (root level)
+test-results/
+test-report.html
