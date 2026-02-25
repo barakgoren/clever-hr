@@ -1,4 +1,23 @@
+### Prompt:
+
+OK, we finalized a major milestone, what we want to do next is a todo list for next features and keep working later.     
+                                                                                                                           
+  Lets create a "TODO_LATER.md" file, and insert this tasks into it, i will tell you the features and you will insert      
+  it with very detailed tasks to complete the features.                                                                    
+                                                                                                                           
+  - Before keeping working, maintaining and adding features, we will make an organize set of tests both for backend        
+  with jest that test all the endpoints in a various options that absolutly makes sure all the functionality on this   
+  stable version of the backend is absolutly working well. also for front end, making scripts using playwright that        
+  opens a browser (visibly) and browsing throguh the entire app functionallity, creating/editing roles with full           
+  details, applying to newly created roles, adding stages with description to applications, etc.                           
+  - Create email service. first, foundationaly, create a stable email service that support html templates with             
+  "handlebars", in the feature we will create a feature that inside an application, when we will press the "Email"         
+  button, it will open a email sent that let the user sent an email to a candidate from the system with optionally         
+  templates. 
+  
+           
 # TODO — Future Features
+
 
 ---
 
