@@ -14,7 +14,11 @@
       "Bash(npx:*)",
       "WebFetch(domain:context7.com)",
       "WebFetch(domain:zod.dev)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(find:*)",
+      "Bash(psql:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)"
     ]
   }
 }
