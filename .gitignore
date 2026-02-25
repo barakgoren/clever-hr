@@ -36,3 +36,8 @@ playwright-*.mjs
 playwright-*.js
 screenshots/
 playwright-screenshots/
+
+# Playwright E2E — auth state and test artifacts
+apps/web/tests/.auth/
+apps/web/playwright-report/
+apps/web/test-results/

@@ -12,6 +12,7 @@ import rolesRoutes from './routes/roles';
 import applicationsRoutes from './routes/applications';
 import publicRoutes from './routes/public';
 import adminRoutes from './routes/admin';
+import emailTemplatesRoutes from './routes/emailTemplates';
 import { errorHandler } from './middleware/errorHandler';
 
 export const app = express();
@@ -42,6 +43,7 @@ app.use('/api/company', companyRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/api/applications', applicationsRoutes);
+app.use('/api/email-templates', emailTemplatesRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);
 

@@ -18,6 +18,9 @@ export type { CreateRoleInput, UpdateRoleInput } from './schemas/role';
 export { submitApplicationSchema, moveApplicationStageSchema, addApplicationTimelineSchema } from './schemas/application';
 export type { SubmitApplicationInput, MoveApplicationStageInput, AddApplicationTimelineInput } from './schemas/application';
 
+export { sendEmailSchema, createEmailTemplateSchema, updateEmailTemplateSchema } from './schemas/email';
+export type { SendEmailInput, CreateEmailTemplateInput, UpdateEmailTemplateInput } from './schemas/email';
+
 // Legacy (keep ApiResponse for backwards compat)
 export interface ApiResponse<T = unknown> {
   success: boolean;

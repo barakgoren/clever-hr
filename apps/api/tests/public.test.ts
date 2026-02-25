@@ -53,7 +53,8 @@ describe('GET /api/public/:companySlug/roles/:roleId', () => {
     const res = await request(app).get(`/api/public/test-co/roles/${roleId}`);
     expect(res.status).toBe(200);
     expect(res.body.data.id).toBe(roleId);
-    expect(res.body.data.customFields).toHaveLength(1);
+    // 1 provided custom field + 2 system fields (full_name, email) = 3
+    expect(res.body.data.customFields).toHaveLength(3);
     expect(res.body.data.requirements).toContain('React');
   });
 

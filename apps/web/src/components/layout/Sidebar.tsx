@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Briefcase,
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,11 +20,12 @@ import { companyService } from '@/services/company.service';
 import { useRouter } from 'next/navigation';
 
 const NAV = [
-  { href: '/dashboard',               label: 'Dashboard',    icon: LayoutDashboard },
-  { href: '/dashboard/applications',  label: 'Applications', icon: FileText },
-  { href: '/dashboard/templates',     label: 'Templates',    icon: Layers },
-  { href: '/dashboard/users',         label: 'Users',        icon: Users },
-  { href: '/dashboard/settings',      label: 'Settings',     icon: Settings },
+  { href: '/dashboard',                      label: 'Dashboard',       icon: LayoutDashboard },
+  { href: '/dashboard/applications',         label: 'Applications',    icon: FileText },
+  { href: '/dashboard/templates',            label: 'Templates',       icon: Layers },
+  { href: '/dashboard/users',                label: 'Users',           icon: Users },
+  { href: '/dashboard/email-templates',      label: 'Email Templates', icon: Mail },
+  { href: '/dashboard/settings',             label: 'Settings',        icon: Settings },
 ];
 
 export function Sidebar() {

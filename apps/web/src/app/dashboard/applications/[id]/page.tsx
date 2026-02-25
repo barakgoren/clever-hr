@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { applicationService } from "@/services/application.service";
 import { roleService } from "@/services/role.service";
+import { EmailComposerModal } from "@/components/EmailComposerModal";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ export default function ApplicationDetailPage() {
   const [previewField, setPreviewField] = useState<string | null>(null);
   const [timelineStageId, setTimelineStageId] = useState<string>("");
   const [timelineDescription, setTimelineDescription] = useState("");
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
 
   const { data: application, isLoading } = useQuery({
     queryKey: ["application", id],
@@ -223,12 +225,14 @@ export default function ApplicationDetailPage() {
         </button>
         <div className="flex items-center gap-2">
           {email && (
-            <a href={`mailto:${email}`}>
-              <Button variant="secondary" size="sm">
-                <Mail className="h-3.5 w-3.5" />
-                Email
-              </Button>
-            </a>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setEmailModalOpen(true)}
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Email
+            </Button>
           )}
           {phone && (
             <a href={`tel:${phone}`}>
@@ -619,6 +623,17 @@ export default function ApplicationDetailPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Email composer modal */}
+      {email && (
+        <EmailComposerModal
+          open={emailModalOpen}
+          onClose={() => setEmailModalOpen(false)}
+          applicationId={Number(id)}
+          candidateEmail={email}
+          candidateName={fullName}
+        />
       )}
     </div>
   );

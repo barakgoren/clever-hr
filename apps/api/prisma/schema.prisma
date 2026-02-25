@@ -29,10 +29,11 @@ model Company {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  users        User[]
-  roles        Role[]
-  applications Application[]
-  timeline     ApplicationTimeline[]
+  users          User[]
+  roles          Role[]
+  applications   Application[]
+  timeline       ApplicationTimeline[]
+  emailTemplates EmailTemplate[]
 }
 
 model User {
@@ -129,4 +130,16 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailTemplate {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  name      String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }

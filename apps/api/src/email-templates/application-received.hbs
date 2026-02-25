@@ -1,0 +1,21 @@
+{{#> layout}}
+  {{#*inline "body"}}
+    <h2>We received your application!</h2>
+    <p>Hi <strong>{{candidateName}}</strong>,</p>
+    <p>
+      Thank you for applying for the <strong>{{roleName}}</strong> position at
+      <strong>{{companyName}}</strong>. We've received your application and our
+      team will review it shortly.
+    </p>
+    <hr class="divider" />
+    <p><strong>Application details</strong></p>
+    <ul>
+      <li><strong>Role:</strong> {{roleName}}</li>
+      <li><strong>Company:</strong> {{companyName}}</li>
+      <li><strong>Submitted:</strong> {{submittedAt}}</li>
+    </ul>
+    <hr class="divider" />
+    <p>We'll be in touch soon. In the meantime, feel free to reach out if you have any questions.</p>
+    <p>Best regards,<br /><strong>{{companyName}} Hiring Team</strong></p>
+  {{/inline}}
+{{/layout}}

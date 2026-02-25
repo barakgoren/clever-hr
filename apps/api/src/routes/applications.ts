@@ -1,7 +1,10 @@
 import { Router, Response, NextFunction } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { applicationService } from '../services/application.service';
-import { addApplicationTimelineSchema, moveApplicationStageSchema } from '@repo/shared';
+import { addApplicationTimelineSchema, moveApplicationStageSchema, sendEmailSchema } from '@repo/shared';
+import { sendEmail } from '../services/email.service';
+import { emailTemplateService } from '../services/emailTemplate.service';
+import prisma from '../lib/prisma';
 import { z } from 'zod';
 
 const router = Router();
@@ -69,6 +72,50 @@ router.post('/:id/timeline', async (req: AuthRequest, res: Response, next: NextF
       { stageId: body.stageId, description: body.description }
     );
     res.status(201).json({ success: true, data: app });
+  } catch (err) { next(err); }
+});
+
+// Send an email to the applicant
+router.post('/:id/email', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { to, subject, body, templateId } = sendEmailSchema.parse(req.body);
+    const application = await applicationService.getById(
+      parseInt(req.params.id),
+      req.user!.companyId
+    );
+
+    let finalSubject = subject;
+    let finalBody = body;
+
+    // If a saved template is requested, merge its content
+    if (templateId) {
+      const tmpl = await emailTemplateService.getById(templateId, req.user!.companyId);
+      finalSubject = tmpl.subject;
+      finalBody = tmpl.body;
+    }
+
+    const fd = application.formData as Record<string, string>;
+    const candidateName = fd.full_name ?? to;
+
+    const [sender, company] = await Promise.all([
+      prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
+      prisma.company.findUnique({ where: { id: req.user!.companyId }, select: { name: true, logoUrl: true } }),
+    ]);
+
+    await sendEmail({
+      to,
+      subject: finalSubject,
+      templateName: 'custom-message',
+      context: {
+        candidateName,
+        companyName: company?.name ?? '',
+        logoUrl: company?.logoUrl ?? null,
+        senderName: sender?.name ?? 'HR Team',
+        body: finalBody,
+      },
+    });
+
+    res.json({ success: true });
   } catch (err) { next(err); }
 });
 

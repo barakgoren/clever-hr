@@ -56,7 +56,8 @@ describe('POST /api/roles', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.name).toBe('Senior Engineer');
     expect(res.body.data.isActive).toBe(true);
-    expect(res.body.data.customFields).toHaveLength(2);
+    // 2 provided custom fields + 2 system fields (full_name, email) = 4
+    expect(res.body.data.customFields).toHaveLength(4);
     createdRoleId = res.body.data.id;
   });
 });
