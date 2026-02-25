@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Send, BookTemplate, Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -29,6 +29,7 @@ interface EmailComposerModalProps {
   applicationId: number;
   candidateEmail: string;
   candidateName: string;
+  onSent?: (status: 'sent' | 'failed') => void;
 }
 
 export function EmailComposerModal({
@@ -37,7 +38,9 @@ export function EmailComposerModal({
   applicationId,
   candidateEmail,
   candidateName,
+  onSent,
 }: EmailComposerModalProps) {
+  const queryClient = useQueryClient();
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -50,7 +53,6 @@ export function EmailComposerModal({
     enabled: open,
   });
 
-  // When a template is selected, populate subject + body
   useEffect(() => {
     if (!selectedTemplateId || selectedTemplateId === 'none') return;
     const tmpl = templates.find((t) => String(t.id) === selectedTemplateId);
@@ -60,7 +62,6 @@ export function EmailComposerModal({
     }
   }, [selectedTemplateId, templates]);
 
-  // Reset state when modal opens
   useEffect(() => {
     if (open) {
       setSubject('');
@@ -79,13 +80,22 @@ export function EmailComposerModal({
         body,
         templateId: selectedTemplateId && selectedTemplateId !== 'none' ? Number(selectedTemplateId) : undefined,
       }),
-    onSuccess: () => {
-      setStatus('success');
-      setTimeout(onClose, 1500);
+    onSuccess: (sendStatus) => {
+      if (sendStatus === 'sent') {
+        setStatus('success');
+        queryClient.invalidateQueries({ queryKey: ['application', String(applicationId)] });
+        queryClient.invalidateQueries({ queryKey: ['applications'] });
+        setTimeout(onClose, 1200);
+      } else {
+        setStatus('error');
+        setErrorMsg('Email could not be sent. It has been logged in the history below.');
+      }
+      onSent?.(sendStatus);
     },
     onError: (err: Error) => {
       setStatus('error');
       setErrorMsg(err.message ?? 'Failed to send email.');
+      onSent?.('failed');
     },
   });
 
@@ -102,17 +112,13 @@ export function EmailComposerModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Template selector */}
           {templates.length > 0 && (
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
                 <BookTemplate className="inline h-3.5 w-3.5 mr-1" />
                 Use saved template
               </label>
-              <Select
-                value={selectedTemplateId}
-                onValueChange={setSelectedTemplateId}
-              >
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a template (optional)" />
                 </SelectTrigger>
@@ -128,7 +134,6 @@ export function EmailComposerModal({
             </div>
           )}
 
-          {/* Subject */}
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
               Subject
@@ -140,7 +145,6 @@ export function EmailComposerModal({
             />
           </div>
 
-          {/* Body */}
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
               Message
@@ -157,7 +161,6 @@ export function EmailComposerModal({
             </p>
           </div>
 
-          {/* Status messages */}
           {status === 'success' && (
             <p className="rounded-[var(--radius)] bg-green-50 px-3 py-2 text-sm text-green-700">
               Email sent successfully!
@@ -174,10 +177,7 @@ export function EmailComposerModal({
           <Button variant="ghost" onClick={onClose} disabled={sendMutation.isPending}>
             Cancel
           </Button>
-          <Button
-            onClick={() => sendMutation.mutate()}
-            disabled={!canSend}
-          >
+          <Button onClick={() => sendMutation.mutate()} disabled={!canSend}>
             {sendMutation.isPending ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

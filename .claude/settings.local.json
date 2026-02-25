@@ -21,7 +21,8 @@
       "Bash(git add:*)",
       "Bash(echo playwright available:*)",
       "Bash(cd /Users/barakgoren/Desktop/frontend/claude-code-test && node playwright-test.js 2>&1)",
-      "Bash(sleep 4 && cd /Users/barakgoren/Desktop/frontend/claude-code-test && node playwright-test.js 2>&1)"
+      "Bash(sleep 4 && cd /Users/barakgoren/Desktop/frontend/claude-code-test && node playwright-test.js 2>&1)",
+      "Bash(npm test:*)"
     ]
   }
 }

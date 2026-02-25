@@ -16,7 +16,6 @@ export default defineConfig({
     headless: false,           // visible browser as requested
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    storageState: 'tests/.auth/state.json', // reuse login session
   },
 
   // Auto-start dev servers if they are not already running
@@ -49,7 +48,10 @@ export default defineConfig({
     // 2. All spec files reuse the saved session
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'tests/.auth/state.json', // reuse login session saved by setup
+      },
       dependencies: ['setup'],
     },
   ],

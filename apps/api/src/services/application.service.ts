@@ -33,6 +33,10 @@ export const applicationService = {
         role: { select: { id: true, name: true, color: true, customFields: true } },
         currentStage: { select: { id: true, name: true, color: true, icon: true } },
         timeline: { orderBy: { createdAt: 'asc' } },
+        emails: {
+          orderBy: { createdAt: 'desc' },
+          include: { sender: { select: { id: true, name: true, email: true } } },
+        },
       },
     });
     if (!app) throw new AppError(404, 'Application not found');

@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// Auth spec runs without a saved session so we can test the unauthenticated state
-test.use({ storageState: undefined });
+// Auth spec runs without a saved session so we can test the unauthenticated state.
+// Use an explicit empty state — `undefined` falls back to the project-level
+// storageState and would silently use the saved session.
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test('visiting / while unauthenticated redirects to /login', async ({ page }) => {
   await page.goto('/');
@@ -24,8 +26,8 @@ test('login with invalid credentials shows error', async ({ page }) => {
 
 test('login with valid credentials redirects to dashboard', async ({ page }) => {
   await page.goto('/login');
-  await page.getByLabel(/email/i).fill('admin@test-co.com');
-  await page.getByLabel(/password/i).fill('password123');
+  await page.getByLabel(/email/i).fill(process.env.TEST_EMAIL ?? 'barak.goren6@gmail.com');
+  await page.getByLabel(/password/i).fill(process.env.TEST_PASSWORD ?? '123123123');
   await page.getByRole('button', { name: /sign in|login/i }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
 });
@@ -33,8 +35,8 @@ test('login with valid credentials redirects to dashboard', async ({ page }) => 
 test('logout clears session and redirects to /login', async ({ page }) => {
   // Log in first
   await page.goto('/login');
-  await page.getByLabel(/email/i).fill('admin@test-co.com');
-  await page.getByLabel(/password/i).fill('password123');
+  await page.getByLabel(/email/i).fill(process.env.TEST_EMAIL ?? 'barak.goren6@gmail.com');
+  await page.getByLabel(/password/i).fill(process.env.TEST_PASSWORD ?? '123123123');
   await page.getByRole('button', { name: /sign in|login/i }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
 

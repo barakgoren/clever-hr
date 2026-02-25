@@ -2,7 +2,7 @@ import { Router, Response, NextFunction } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { applicationService } from '../services/application.service';
 import { addApplicationTimelineSchema, moveApplicationStageSchema, sendEmailSchema } from '@repo/shared';
-import { sendEmail } from '../services/email.service';
+import { previewEmail, sendEmail } from '../services/email.service';
 import { emailTemplateService } from '../services/emailTemplate.service';
 import prisma from '../lib/prisma';
 import { z } from 'zod';
@@ -96,26 +96,69 @@ router.post('/:id/email', async (req: AuthRequest, res: Response, next: NextFunc
 
     const fd = application.formData as Record<string, string>;
     const candidateName = fd.full_name ?? to;
+    const roleName = application.role?.name ?? '';
 
     const [sender, company] = await Promise.all([
       prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
       prisma.company.findUnique({ where: { id: req.user!.companyId }, select: { name: true, logoUrl: true } }),
     ]);
 
-    await sendEmail({
+    const replacements: Record<string, string> = {
+      candidateName: candidateName ?? '',
+      roleName,
+      companyName: company?.name ?? '',
+    };
+
+    const interpolate = (text: string) =>
+      text.replace(/{{\s*(candidateName|roleName|companyName)\s*}}/g, (_m, key: keyof typeof replacements) =>
+        replacements[key] ?? ''
+      );
+
+    const interpolatedSubject = interpolate(finalSubject);
+    const interpolatedBody = interpolate(finalBody);
+
+    const senderDisplayName = company?.name ?? sender?.name ?? 'HR Team';
+
+    const html = previewEmail('custom-message', {
+      candidateName,
+      companyName: replacements.companyName,
+      logoUrl: company?.logoUrl ?? null,
+      senderName: senderDisplayName,
+      body: interpolatedBody,
+      subject: interpolatedSubject,
+    });
+
+    const sendResult = await sendEmail({
       to,
-      subject: finalSubject,
+      subject: interpolatedSubject,
       templateName: 'custom-message',
+      senderName: senderDisplayName,
       context: {
         candidateName,
-        companyName: company?.name ?? '',
+        companyName: replacements.companyName,
         logoUrl: company?.logoUrl ?? null,
-        senderName: sender?.name ?? 'HR Team',
-        body: finalBody,
+        senderName: senderDisplayName,
+        body: interpolatedBody,
+      },
+      renderedHtml: html,
+    });
+
+    await prisma.applicationEmail.create({
+      data: {
+        applicationId: application.id,
+        companyId: req.user!.companyId,
+        senderUserId: req.user!.userId,
+        to,
+        subject: interpolatedSubject,
+        body: interpolatedBody,
+        html,
+        templateId: templateId ?? null,
+        status: sendResult.error ? 'failed' : 'sent',
+        error: sendResult.error ?? null,
       },
     });
 
-    res.json({ success: true });
+    res.json({ success: true, data: { status: sendResult.error ? 'failed' : 'sent' } });
   } catch (err) { next(err); }
 });
 

@@ -50,6 +50,43 @@ const RESEND_KEY  = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM ?? 'Clever HR <no-reply@clever-hr.com>';
 const TO_EMAIL    = 'barak.goren6@gmail.com';
 
+// ─── Shared inline styles (must be declared before buildReport is called) ─────
+const S = {
+  sectionTitle: 'margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:2px solid #e2e8f0;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center',
+  sectionMeta:  'font-size:12px;font-weight:400;color:#6b7280',
+  suiteWrap:    'margin-bottom:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden',
+  suiteHeader:  'padding:10px 14px;display:flex;justify-content:space-between;align-items:center',
+  suiteCount:   'font-size:12px;color:#6b7280',
+  table:        'width:100%;border-collapse:collapse',
+  testRow:      'border-top:1px solid #f1f5f9',
+  testName:     'padding:6px 12px;font-size:12px;color:#374151',
+  badgeCell:    'padding:6px 8px;text-align:center;white-space:nowrap',
+  durCell:      'padding:6px 10px;text-align:right;white-space:nowrap',
+  dur:          'font-size:11px;color:#9ca3af',
+  errBlock:     'margin:4px 8px 8px;padding:10px 12px;background:#fff1f2;border-left:3px solid #ef4444;font-size:11px;color:#7f1d1d;white-space:pre-wrap;border-radius:0 4px 4px 0;font-family:monospace',
+};
+
+function passBadge() {
+  return `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">PASS</span>`;
+}
+function failBadge() {
+  return `<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">FAIL</span>`;
+}
+function summaryCard(label, value, color, bg) {
+  return `
+    <div style="flex:1;background:${bg};border-radius:10px;padding:16px;text-align:center;border:1px solid ${color}22">
+      <p style="margin:0;font-size:30px;font-weight:800;color:${color}">${value}</p>
+      <p style="margin:4px 0 0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};opacity:.8">${label}</p>
+    </div>`;
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // ─── Run helper ───────────────────────────────────────────────────────────────
 function run(label, cmd, args, cwd) {
   console.log(`\n${'═'.repeat(55)}`);
@@ -64,6 +101,14 @@ function run(label, cmd, args, cwd) {
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
   return result;
+}
+
+// ─── Ensure Playwright auth dir exists (avoids "file not found" on first run) ─
+const authDir  = path.join(WEB_DIR, 'tests', '.auth');
+const authFile = path.join(authDir, 'state.json');
+mkdirSync(authDir, { recursive: true });
+if (!existsSync(authFile)) {
+  writeFileSync(authFile, JSON.stringify({ cookies: [], origins: [] }), 'utf-8');
 }
 
 // ─── Step 1 — API Tests ───────────────────────────────────────────────────────
@@ -86,7 +131,7 @@ const pwRun = run(
 
 let pwData = null;
 try   { pwData = JSON.parse(readFileSync(PW_OUT, 'utf-8')); }
-catch { /* results file missing → server likely was not reachable */ }
+catch { /* results file missing — server likely was not reachable */ }
 
 // ─── Step 3 — Generate HTML report ───────────────────────────────────────────
 console.log(`\n${'═'.repeat(55)}`);
@@ -170,10 +215,15 @@ function buildReport({ vitestData, pwData }) {
       const specRows = (suite.specs ?? []).map(spec => {
         const ok    = spec.ok !== false && (spec.tests ?? []).every(t => t.status === 'expected' || t.status === 'passed');
         const badge = ok ? passBadge() : failBadge();
-        const dur   = (spec.tests ?? [])[0]?.duration;
+        // duration lives on results[0].duration in newer Playwright JSON
+        const firstResult = (spec.tests ?? [])[0]?.results?.[0];
+        const dur   = firstResult?.duration ?? (spec.tests ?? [])[0]?.duration;
         const durTd = dur != null ? `<span style="${S.dur}">${dur}ms</span>` : '';
-        const errs  = (spec.tests ?? []).flatMap(t => t.errors ?? [])
-          .map(e => `<tr><td colspan="3"><pre style="${S.errBlock}">${esc(String(e.message ?? e).slice(0, 600))}</pre></td></tr>`)
+        // errors live at spec.tests[].results[].error.message (not t.errors)
+        const stripAnsi = s => String(s).replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+        const errs = (spec.tests ?? [])
+          .flatMap(t => (t.results ?? []).map(r => r.error?.message ?? r.error?.value).filter(Boolean))
+          .map(msg => `<tr><td colspan="3"><pre style="${S.errBlock}">${esc(stripAnsi(msg).slice(0, 800))}</pre></td></tr>`)
           .join('');
         return `<tr style="${S.testRow}">
           <td style="${S.testName}">${esc(spec.title)}</td>
@@ -295,44 +345,6 @@ function buildReport({ vitestData, pwData }) {
 </html>`;
 }
 
-// ── Micro-helpers ──────────────────────────────────────────────────────────────
-function passBadge() {
-  return `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">PASS</span>`;
-}
-function failBadge() {
-  return `<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">FAIL</span>`;
-}
-function summaryCard(label, value, color, bg) {
-  return `
-    <div style="flex:1;background:${bg};border-radius:10px;padding:16px;text-align:center;border:1px solid ${color}22">
-      <p style="margin:0;font-size:30px;font-weight:800;color:${color}">${value}</p>
-      <p style="margin:4px 0 0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:${color};opacity:.8">${label}</p>
-    </div>`;
-}
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-// ── Shared inline styles ───────────────────────────────────────────────────────
-const S = {
-  sectionTitle: 'margin:0 0 14px;font-size:15px;font-weight:700;border-bottom:2px solid #e2e8f0;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center',
-  sectionMeta:  'font-size:12px;font-weight:400;color:#6b7280',
-  suiteWrap:    'margin-bottom:12px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden',
-  suiteHeader:  'padding:10px 14px;display:flex;justify-content:space-between;align-items:center',
-  suiteCount:   'font-size:12px;color:#6b7280',
-  table:        'width:100%;border-collapse:collapse',
-  testRow:      'border-top:1px solid #f1f5f9',
-  testName:     'padding:6px 12px;font-size:12px;color:#374151',
-  badgeCell:    'padding:6px 8px;text-align:center;white-space:nowrap',
-  durCell:      'padding:6px 10px;text-align:right;white-space:nowrap',
-  dur:          'font-size:11px;color:#9ca3af',
-  errBlock:     'margin:4px 8px 8px;padding:10px 12px;background:#fff1f2;border-left:3px solid #ef4444;font-size:11px;color:#7f1d1d;white-space:pre-wrap;border-radius:0 4px 4px 0;font-family:monospace',
-};
-
 // ══════════════════════════════════════════════════════════════════════════════
 //  EMAIL SENDER (Resend)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -351,12 +363,7 @@ async function sendEmail(html) {
       Authorization:  `Bearer ${RESEND_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from:    RESEND_FROM,
-      to:      [TO_EMAIL],
-      subject,
-      html,
-    }),
+    body: JSON.stringify({ from: RESEND_FROM, to: [TO_EMAIL], subject, html }),
   });
 
   const data = await res.json().catch(() => ({}));

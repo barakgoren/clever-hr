@@ -34,6 +34,7 @@ model Company {
   applications   Application[]
   timeline       ApplicationTimeline[]
   emailTemplates EmailTemplate[]
+  emails         ApplicationEmail[]
 }
 
 model User {
@@ -50,6 +51,7 @@ model User {
   company       Company        @relation(fields: [companyId], references: [id])
   roles         Role[]
   refreshTokens RefreshToken[]
+  sentEmails    ApplicationEmail[]
 }
 
 model Role {
@@ -104,6 +106,7 @@ model Application {
   company      Company @relation(fields: [companyId], references: [id])
   currentStage Stage?  @relation(fields: [currentStageId], references: [id], onDelete: SetNull)
   timeline     ApplicationTimeline[]
+  emails       ApplicationEmail[]
 
   @@unique([roleId, email])
 }
@@ -120,6 +123,28 @@ model ApplicationTimeline {
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   stage       Stage?      @relation(fields: [stageId], references: [id], onDelete: SetNull)
   company     Company     @relation(fields: [companyId], references: [id])
+}
+
+model ApplicationEmail {
+  id            Int      @id @default(autoincrement())
+  applicationId Int
+  companyId     Int
+  senderUserId  Int
+  to            String
+  subject       String
+  body          String
+  html          String
+  status        String   @default("sent")
+  error         String?
+  templateId    Int?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  company     Company     @relation(fields: [companyId], references: [id])
+  sender      User        @relation(fields: [senderUserId], references: [id])
+
+  @@index([applicationId, createdAt])
+  @@index([companyId])
 }
 
 model RefreshToken {

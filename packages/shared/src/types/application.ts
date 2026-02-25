@@ -19,6 +19,26 @@ export interface ApplicationTimelineEntry {
   createdAt: string;
 }
 
+export interface ApplicationEmailEntry {
+  id: number;
+  applicationId: number;
+  companyId: number;
+  senderUserId: number;
+  to: string;
+  subject: string;
+  body: string;
+  html: string;
+  status: 'sent' | 'failed';
+  error: string | null;
+  templateId: number | null;
+  createdAt: string;
+  sender?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+}
+
 export interface ApplicationWithRelations extends Application {
   role: {
     id: number;
@@ -32,4 +52,5 @@ export interface ApplicationWithRelations extends Application {
     icon: string;
   } | null;
   timeline?: ApplicationTimelineEntry[];
+  emails?: ApplicationEmailEntry[];
 }

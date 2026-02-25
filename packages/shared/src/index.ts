@@ -3,7 +3,7 @@ export type { Company, CompanyPublic } from './types/company';
 export type { User, UserRole } from './types/user';
 export type { Role, CustomField, FieldType, RoleType } from './types/role';
 export type { Stage } from './types/stage';
-export type { Application, ApplicationWithRelations, ApplicationTimelineEntry } from './types/application';
+export type { Application, ApplicationWithRelations, ApplicationTimelineEntry, ApplicationEmailEntry } from './types/application';
 
 // Schemas
 export { updateCompanySchema } from './schemas/company';

@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-// Public pages are unauthenticated — clear stored session
-test.use({ storageState: undefined });
+// Public pages are unauthenticated — explicit empty state so we don't
+// accidentally fall back to the project-level storageState file.
+test.use({ storageState: { cookies: [], origins: [] } });
 
 const COMPANY_SLUG = 'test-co'; // matches the slug seeded in globalSetup
 

@@ -20,10 +20,12 @@ import {
   Clock,
   PhoneCall,
   Mail as MailIcon,
+  MailCheck,
   Calendar,
   MessageSquare,
   User as UserIcon,
   Settings,
+  AlertTriangle,
 } from "lucide-react";
 import { applicationService } from "@/services/application.service";
 import { roleService } from "@/services/role.service";
@@ -204,6 +206,8 @@ export default function ApplicationDetailPage() {
   const fullName = String(application.formData?.full_name ?? "—");
   const email = String(application.formData?.email ?? "");
   const phone = String(application.formData?.phone ?? "");
+  const emailHistory = application.emails ?? [];
+  const emails = application.emails ?? [];
 
   const customFieldValues = Object.entries(application.formData ?? {}).filter(
     ([k]) => k !== "full_name" && k !== "email" && k !== "phone",
@@ -211,6 +215,15 @@ export default function ApplicationDetailPage() {
 
   const fileFields = role?.customFields.filter((f) => f.type === "file") ?? [];
   const hasResume = application.resumeS3Key;
+
+  const formatDateTime = (value: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(value));
 
   return (
     <div className="space-y-5">
@@ -494,6 +507,115 @@ export default function ApplicationDetailPage() {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Email history */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Email History</CardTitle>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Sent emails for this application
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {emailHistory.length === 0 ? (
+            <p className="text-sm text-[var(--color-text-muted)]">No emails sent yet.</p>
+          ) : (
+            emailHistory.map((mail) => {
+              const isFailed = mail.status === "failed";
+              const tone = isFailed
+                ? {
+                    border: "border-red-100",
+                    glow: "shadow-[0_10px_30px_-18px_rgba(239,68,68,0.6)]",
+                    accent: "from-red-50 via-white to-white",
+                    chip: "bg-red-100 text-red-700 border-red-200",
+                    dot: "bg-red-500",
+                    label: "Failed",
+                    Icon: AlertTriangle,
+                  }
+                : {
+                    border: "border-emerald-100",
+                    glow: "shadow-[0_10px_30px_-18px_rgba(16,185,129,0.55)]",
+                    accent: "from-emerald-50 via-white to-white",
+                    chip: "bg-emerald-100 text-emerald-700 border-emerald-200",
+                    dot: "bg-emerald-500",
+                    label: "Sent",
+                    Icon: MailCheck,
+                  };
+
+              const sentAt = new Intl.DateTimeFormat("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              }).format(new Date(mail.createdAt));
+
+              return (
+                <div
+                  key={mail.id}
+                  className={`relative overflow-hidden rounded-[var(--radius)] bg-white ${tone.border} ring-1 ring-inset ring-white/50 ${tone.glow}`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-r ${tone.accent} opacity-90`} />
+                  <div className="relative p-4 space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white shadow-sm">
+                        <tone.Icon className="h-4 w-4 text-[var(--color-text-primary)]" />
+                      </div>
+
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                            {mail.subject || "No subject"}
+                          </p>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tone.chip}`}
+                          >
+                            <span className={`h-2 w-2 rounded-full ${tone.dot}`} />
+                            {tone.label}
+                          </span>
+                          {mail.templateId && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-2 py-0.5 text-[11px] text-[var(--color-text-muted)]">
+                              Template #{mail.templateId}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 text-[11px] text-[var(--color-text-muted)]">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
+                            <Mail className="h-3 w-3" /> To {mail.to}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
+                            <Clock className="h-3 w-3" /> {sentAt}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
+                            <UserIcon className="h-3 w-3" />
+                            {mail.sender?.name ?? "Unknown sender"}
+                          </span>
+                          {mail.sender?.email && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
+                              {mail.sender.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-white/85 p-3 text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">
+                      {mail.body}
+                    </div>
+
+                    {mail.error && (
+                      <div className="inline-flex items-center gap-2 rounded-[var(--radius)] border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-700">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Error: {mail.error}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </CardContent>
       </Card>
 

@@ -63,50 +63,74 @@ describe('previewEmail', () => {
 describe('sendEmail', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.RESEND_FROM = 'Claver HR <onboarding@resend.dev>';
   });
 
   it('sends to the correct address without throwing', async () => {
-    await expect(
-      sendEmail({
-        to: 'candidate@example.com',
-        subject: 'Your Application',
-        templateName: 'application-received',
-        context: {
-          candidateName: 'Jane Doe',
-          roleName: 'Product Designer',
-          companyName: 'Startup Inc',
-          submittedAt: '2026-02-25',
-        },
-      })
-    ).resolves.not.toThrow();
+    const result = await sendEmail({
+      to: 'candidate@example.com',
+      subject: 'Your Application',
+      templateName: 'application-received',
+      context: {
+        candidateName: 'Jane Doe',
+        roleName: 'Product Designer',
+        companyName: 'Startup Inc',
+        submittedAt: '2026-02-25',
+      },
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.html).toContain('Jane Doe');
   });
 
   it('does not throw when Resend returns an error', async () => {
     mockSend.mockResolvedValueOnce({ data: null, error: { message: 'Invalid API key' } });
 
-    await expect(
-      sendEmail({
-        to: 'test@example.com',
-        subject: 'Test',
-        templateName: 'custom-message',
-        context: {
-          candidateName: 'Test',
-          companyName: 'Test Co',
-          senderName: 'Admin',
-          body: 'Hello',
-        },
-      })
-    ).resolves.not.toThrow();
+    const result = await sendEmail({
+      to: 'test@example.com',
+      subject: 'Test',
+      templateName: 'custom-message',
+      context: {
+        candidateName: 'Test',
+        companyName: 'Test Co',
+        senderName: 'Admin',
+        body: 'Hello',
+      },
+    });
+
+    expect(result.error).toBe('Invalid API key');
   });
 
   it('does not throw when template is missing', async () => {
-    await expect(
-      sendEmail({
-        to: 'test@example.com',
-        subject: 'Test',
-        templateName: 'totally-missing-template',
-        context: {},
+    const result = await sendEmail({
+      to: 'test@example.com',
+      subject: 'Test',
+      templateName: 'totally-missing-template',
+      context: {},
+    });
+
+    expect(result.error).toBeDefined();
+    expect(result.html).toBe('');
+  });
+
+  it('uses the provided sender name while keeping the configured address', async () => {
+    await sendEmail({
+      to: 'candidate@example.com',
+      subject: 'Hello',
+      templateName: 'application-received',
+      senderName: 'Acme Corp',
+      context: {
+        candidateName: 'Jane Doe',
+        roleName: 'Product Designer',
+        companyName: 'Acme Corp',
+        submittedAt: '2026-02-25',
+      },
+    });
+
+    expect(mockSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: 'Acme Corp <onboarding@resend.dev>',
       })
-    ).resolves.not.toThrow();
+    );
   });
 });

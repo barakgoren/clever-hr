@@ -45,6 +45,14 @@ export interface SendEmailOptions {
   subject: string;
   templateName: string;
   context: Record<string, unknown>;
+  renderedHtml?: string;
+  senderName?: string;
+}
+
+export interface SendEmailResult {
+  html: string;
+  error?: string;
+  messageId?: string;
 }
 
 /**
@@ -58,20 +66,37 @@ export function previewEmail(templateName: string, context: Record<string, unkno
 
 /**
  * Send an HTML email via Resend using a Handlebars template.
- * Logs errors without throwing — fire-and-forget safe.
+ * Returns the rendered HTML and a soft error string instead of throwing.
  */
-export async function sendEmail(options: SendEmailOptions): Promise<void> {
-  const { to, subject, templateName, context } = options;
+function formatFromAddress(fromEnv: string, senderName?: string): string {
+  if (!senderName) return fromEnv;
+  const match = fromEnv.match(/<(.+)>/);
+  const emailAddress = match?.[1] ?? fromEnv;
+  return `${senderName} <${emailAddress}>`;
+}
+
+export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
+  const { to, subject, templateName, context, renderedHtml, senderName } = options;
+  const defaultFrom = process.env.RESEND_FROM ?? 'Claver HR <onboarding@resend.dev>';
+  const from = formatFromAddress(defaultFrom, senderName);
+  let html = renderedHtml ?? '';
+
   try {
-    const html = previewEmail(templateName, { ...context, subject });
-    const from = process.env.RESEND_FROM ?? 'Claver HR <onboarding@resend.dev>';
-    const { error } = await getResend().emails.send({ from, to, subject, html });
+    if (!renderedHtml) {
+      html = previewEmail(templateName, { ...context, subject });
+    }
+
+    const { data, error } = await getResend().emails.send({ from, to, subject, html });
     if (error) {
       console.error('[email.service] Resend error:', error);
-    } else {
-      console.log(`[email.service] Email sent → ${Array.isArray(to) ? to.join(', ') : to}`);
+      return { html, error: error.message ?? 'Unknown send error' };
     }
+
+    console.log(`[email.service] Email sent → ${Array.isArray(to) ? to.join(', ') : to}`);
+    return { html, messageId: data?.id };
   } catch (err) {
     console.error('[email.service] Failed to send email:', err);
+    const message = err instanceof Error ? err.message : 'Unknown send error';
+    return { html, error: message };
   }
 }

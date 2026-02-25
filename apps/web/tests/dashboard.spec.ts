@@ -1,10 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('stats cards render with numeric values', async ({ page }) => {
   await page.goto('/dashboard');
+  await page.waitForLoadState('networkidle');
   // Stats cards should contain numbers, not blank/NaN
-  const statCards = page.locator('[class*="card"], [class*="Card"]').first();
-  await expect(statCards).toBeVisible({ timeout: 10_000 });
+  // Cards are plain divs (Tailwind) — locate by their numeric value paragraph
+  const statCard = page.locator('div').filter({
+    has: page.locator('p', { hasText: /^\d+$/ }),
+  }).first();
+  await expect(statCard).toBeVisible({ timeout: 10_000 });
 
   // At least one card should contain a digit
   const cardText = await page.locator('text=/\\d+/').first().textContent({ timeout: 5_000 });

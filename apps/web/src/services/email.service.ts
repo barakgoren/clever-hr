@@ -35,7 +35,11 @@ export const emailService = {
     await apiClient.delete(`/api/email-templates/${id}`);
   },
 
-  async sendToApplicant(applicationId: number, payload: { to: string; subject: string; body: string; templateId?: number }): Promise<void> {
-    await apiClient.post(`/api/applications/${applicationId}/email`, payload);
+  async sendToApplicant(
+    applicationId: number,
+    payload: { to: string; subject: string; body: string; templateId?: number }
+  ): Promise<'sent' | 'failed'> {
+    const { data } = await apiClient.post(`/api/applications/${applicationId}/email`, payload);
+    return data.data?.status === 'failed' ? 'failed' : 'sent';
   },
 };

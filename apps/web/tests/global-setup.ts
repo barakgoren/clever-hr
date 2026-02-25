@@ -16,8 +16,8 @@ setup('authenticate', async ({ page }) => {
   fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
 
   await page.goto('/login');
-  await page.getByLabel(/email/i).fill(process.env.TEST_EMAIL ?? 'admin@test-co.com');
-  await page.getByLabel(/password/i).fill(process.env.TEST_PASSWORD ?? 'password123');
+  await page.getByLabel(/email/i).fill(process.env.TEST_EMAIL ?? 'barak.goren6@gmail.com');
+  await page.getByLabel(/password/i).fill(process.env.TEST_PASSWORD ?? '123123123');
   await page.getByRole('button', { name: /sign in|login/i }).click();
 
   // Wait until we land on the dashboard

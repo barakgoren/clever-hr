@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
 test('applications list renders with correct columns', async ({ page }) => {
   await page.goto('/dashboard/applications');
