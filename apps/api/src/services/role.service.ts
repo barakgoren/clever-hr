@@ -16,6 +16,18 @@ const SYSTEM_FIELDS: CustomField[] = [
   { id: 'email', label: 'Email', type: 'email', required: true, system: true },
 ];
 
+const DEFAULT_STAGES = [
+  { name: 'Pending',  order: 1, color: '#f97316', icon: 'clock' },
+  { name: 'Accepted', order: 2, color: '#22c55e', icon: 'check' },
+  { name: 'Rejected', order: 3, color: '#f43f5e', icon: 'flag'  },
+];
+
+async function createDefaultStages(roleId: number) {
+  await prisma.stage.createMany({
+    data: DEFAULT_STAGES.map((s) => ({ ...s, roleId })),
+  });
+}
+
 function ensureSystemFields(customFields: CustomField[]): CustomField[] {
   const submittedById = new Map(customFields.map((f) => [f.id, f]));
   // Preserve label edits made by the user; always keep system: true and required: true
@@ -47,7 +59,7 @@ export const roleService = {
 
   async create(companyId: number, userId: number, data: CreateRoleInput) {
     const customFields = ensureSystemFields(data.customFields as CustomField[]);
-    return prisma.role.create({
+    const role = await prisma.role.create({
       data: {
         companyId,
         createdByUserId: userId,
@@ -62,6 +74,8 @@ export const roleService = {
       },
       include: { stages: true },
     });
+    await createDefaultStages(role.id);
+    return this.getById(role.id, companyId);
   },
 
   async update(id: number, companyId: number, data: UpdateRoleInput) {
