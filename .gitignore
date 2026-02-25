@@ -30,3 +30,7 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Playwright scripts and screenshots (dev/debug artifacts)
+playwright-*.mjs
+screenshots/
