@@ -1,7 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { applicationService } from '../services/application.service';
-import { moveApplicationStageSchema } from '@repo/shared';
+import { addApplicationTimelineSchema, moveApplicationStageSchema } from '@repo/shared';
 import { z } from 'zod';
 
 const router = Router();
@@ -57,6 +57,18 @@ router.get('/:id/files/:fieldId', async (req: AuthRequest, res: Response, next: 
       req.params.fieldId
     );
     res.json({ success: true, data: { url } });
+  } catch (err) { next(err); }
+});
+
+router.post('/:id/timeline', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const body = addApplicationTimelineSchema.parse(req.body);
+    const app = await applicationService.addTimelineEntry(
+      parseInt(req.params.id),
+      req.user!.companyId,
+      { stageId: body.stageId, description: body.description }
+    );
+    res.status(201).json({ success: true, data: app });
   } catch (err) { next(err); }
 });
 

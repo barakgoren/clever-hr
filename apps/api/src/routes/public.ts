@@ -15,7 +15,7 @@ router.get('/:companySlug', async (req: Request, res: Response, next: NextFuncti
 
     const roles = await prisma.role.findMany({
       where: { companyId: company.id, isActive: true },
-      select: { id: true, name: true, description: true, location: true, type: true, seniorityLevel: true, createdAt: true },
+      select: { id: true, name: true, description: true, location: true, type: true, seniorityLevel: true, createdAt: true, isActive: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -40,7 +40,8 @@ router.get('/:companySlug/roles/:roleId', async (req: Request, res: Response, ne
 });
 
 // POST /api/public/:companySlug/roles/:roleId/apply
-router.post('/:companySlug/roles/:roleId/apply', upload.single('resume'), async (req: Request, res: Response, next: NextFunction) => {
+// Accept any single file field (custom field IDs vary); pick the first file provided
+router.post('/:companySlug/roles/:roleId/apply', upload.any(), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const company = await prisma.company.findUnique({ where: { slug: req.params.companySlug } });
     if (!company) throw new AppError(404, 'Company not found');
@@ -55,12 +56,15 @@ router.post('/:companySlug/roles/:roleId/apply', upload.single('resume'), async 
 
     const formData = { full_name, email, ...rest };
 
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const file = files[0];
+
     const application = await applicationService.submit(
       role.id,
       company.id,
       formData,
-      req.file
-        ? { buffer: req.file.buffer, originalname: req.file.originalname, mimetype: req.file.mimetype }
+      file
+        ? { buffer: file.buffer, originalname: file.originalname, mimetype: file.mimetype }
         : undefined
     );
 

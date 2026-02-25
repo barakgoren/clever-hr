@@ -20,7 +20,7 @@ export const applicationService = {
       },
       include: {
         role: { select: { id: true, name: true } },
-        currentStage: { select: { id: true, name: true } },
+        currentStage: { select: { id: true, name: true, color: true, icon: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -31,7 +31,8 @@ export const applicationService = {
       where: { id, companyId },
       include: {
         role: { select: { id: true, name: true, customFields: true } },
-        currentStage: { select: { id: true, name: true } },
+        currentStage: { select: { id: true, name: true, color: true, icon: true } },
+        timeline: { orderBy: { createdAt: 'asc' } },
       },
     });
     if (!app) throw new AppError(404, 'Application not found');
@@ -74,6 +75,33 @@ export const applicationService = {
     }
 
     return prisma.application.update({ where: { id }, data: { currentStageId: stageId } });
+  },
+
+  async addTimelineEntry(
+    id: number,
+    companyId: number,
+    data: { stageId: number; description?: string }
+  ) {
+    const app = await this.getById(id, companyId);
+
+    const stage = await prisma.stage.findFirst({ where: { id: data.stageId, roleId: app.roleId } });
+    if (!stage) throw new AppError(400, 'Stage does not belong to this application\'s role');
+
+    await prisma.$transaction(async (tx) => {
+      await tx.applicationTimeline.create({
+        data: {
+          applicationId: id,
+          companyId,
+          stageId: stage.id,
+          stageName: stage.name,
+          description: data.description ?? null,
+        },
+      });
+
+      await tx.application.update({ where: { id }, data: { currentStageId: stage.id } });
+    });
+
+    return this.getById(id, companyId);
   },
 
   async delete(id: number, companyId: number) {

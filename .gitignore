@@ -5,9 +5,18 @@ node_modules/
 apps/web/.next/
 apps/web/out/
 
+# TypeScript build info
+*.tsbuildinfo
+
 # Build outputs
 apps/api/dist/
 packages/shared/dist/
+
+# Prisma generated client
+apps/api/src/generated/
+
+# Auto-generated files
+apps/api/openapi.json
 
 # Environment variables
 .env

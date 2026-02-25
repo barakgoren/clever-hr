@@ -64,15 +64,25 @@ router.get('/:roleId/stages', async (req: AuthRequest, res: Response, next: Next
 
 router.post('/:roleId/stages', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { name, order } = z.object({ name: z.string().min(1), order: z.number().int().optional() }).parse(req.body);
-    const stage = await stageService.create(parseInt(req.params.roleId), req.user!.companyId, { name, order });
+    const { name, order, color, icon } = z.object({
+      name: z.string().min(1),
+      order: z.number().int().optional(),
+      color: z.string().min(1).optional(),
+      icon: z.string().min(1).optional(),
+    }).parse(req.body);
+    const stage = await stageService.create(parseInt(req.params.roleId), req.user!.companyId, { name, order, color, icon });
     res.status(201).json({ success: true, data: stage });
   } catch (err) { next(err); }
 });
 
 router.patch('/:roleId/stages/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const data = z.object({ name: z.string().min(1).optional(), order: z.number().int().optional() }).parse(req.body);
+    const data = z.object({
+      name: z.string().min(1).optional(),
+      order: z.number().int().optional(),
+      color: z.string().min(1).optional(),
+      icon: z.string().min(1).optional(),
+    }).parse(req.body);
     const stage = await stageService.update(parseInt(req.params.id), parseInt(req.params.roleId), req.user!.companyId, data);
     res.json({ success: true, data: stage });
   } catch (err) { next(err); }

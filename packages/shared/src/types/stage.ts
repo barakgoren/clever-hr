@@ -3,6 +3,8 @@ export interface Stage {
   roleId: number;
   name: string;
   order: number;
+  color: string;
+  icon: string;
   createdAt: string;
   updatedAt: string;
 }

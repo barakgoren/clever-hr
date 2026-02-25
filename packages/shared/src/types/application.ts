@@ -9,6 +9,16 @@ export interface Application {
   updatedAt: string;
 }
 
+export interface ApplicationTimelineEntry {
+  id: number;
+  applicationId: number;
+  companyId: number;
+  stageId: number | null;
+  stageName: string;
+  description: string | null;
+  createdAt: string;
+}
+
 export interface ApplicationWithRelations extends Application {
   role: {
     id: number;
@@ -17,5 +27,8 @@ export interface ApplicationWithRelations extends Application {
   currentStage: {
     id: number;
     name: string;
+    color: string;
+    icon: string;
   } | null;
+  timeline?: ApplicationTimelineEntry[];
 }

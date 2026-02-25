@@ -10,5 +10,11 @@ export const moveApplicationStageSchema = z.object({
   stageId: z.number().int().positive().nullable(),
 });
 
+export const addApplicationTimelineSchema = z.object({
+  stageId: z.number().int().positive(),
+  description: z.string().max(2000).optional().default(''),
+});
+
 export type SubmitApplicationInput = z.infer<typeof submitApplicationSchema>;
 export type MoveApplicationStageInput = z.infer<typeof moveApplicationStageSchema>;
+export type AddApplicationTimelineInput = z.infer<typeof addApplicationTimelineSchema>;

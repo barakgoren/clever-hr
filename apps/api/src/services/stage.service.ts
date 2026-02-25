@@ -8,17 +8,34 @@ export const stageService = {
     return prisma.stage.findMany({ where: { roleId }, orderBy: { order: 'asc' } });
   },
 
-  async create(roleId: number, companyId: number, data: { name: string; order?: number }) {
+  async create(
+    roleId: number,
+    companyId: number,
+    data: { name: string; order?: number; color?: string; icon?: string }
+  ) {
     const role = await prisma.role.findFirst({ where: { id: roleId, companyId } });
     if (!role) throw new AppError(404, 'Role not found');
 
     const maxOrder = await prisma.stage.aggregate({ where: { roleId }, _max: { order: true } });
     const order = data.order ?? (maxOrder._max.order ?? 0) + 1;
 
-    return prisma.stage.create({ data: { roleId, name: data.name, order } });
+    return prisma.stage.create({
+      data: {
+        roleId,
+        name: data.name,
+        order,
+        color: data.color ?? '#6366f1',
+        icon: data.icon ?? 'flag',
+      },
+    });
   },
 
-  async update(id: number, roleId: number, companyId: number, data: { name?: string; order?: number }) {
+  async update(
+    id: number,
+    roleId: number,
+    companyId: number,
+    data: { name?: string; order?: number; color?: string; icon?: string }
+  ) {
     const stage = await prisma.stage.findFirst({
       where: { id, roleId },
       include: { role: true },

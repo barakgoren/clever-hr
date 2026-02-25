@@ -32,6 +32,7 @@ model Company {
   users        User[]
   roles        Role[]
   applications Application[]
+  timeline     ApplicationTimeline[]
 }
 
 model User {
@@ -76,11 +77,14 @@ model Stage {
   roleId    Int
   name      String
   order     Int
+  color     String   @default("#6366f1")
+  icon      String   @default("flag")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   role         Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
   applications Application[]
+  timeline     ApplicationTimeline[]
 }
 
 model Application {
@@ -96,6 +100,21 @@ model Application {
   role         Role    @relation(fields: [roleId], references: [id])
   company      Company @relation(fields: [companyId], references: [id])
   currentStage Stage?  @relation(fields: [currentStageId], references: [id], onDelete: SetNull)
+  timeline     ApplicationTimeline[]
+}
+
+model ApplicationTimeline {
+  id            Int      @id @default(autoincrement())
+  applicationId Int
+  companyId     Int
+  stageId       Int?
+  stageName     String
+  description   String?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  stage       Stage?      @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  company     Company     @relation(fields: [companyId], references: [id])
 }
 
 model RefreshToken {
