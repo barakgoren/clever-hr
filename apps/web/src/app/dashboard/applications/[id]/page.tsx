@@ -96,6 +96,8 @@ export default function ApplicationDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [fileLoadingField, setFileLoadingField] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewField, setPreviewField] = useState<string | null>(null);
   const [timelineStageId, setTimelineStageId] = useState<string>("");
   const [timelineDescription, setTimelineDescription] = useState("");
 
@@ -155,6 +157,15 @@ export default function ApplicationDetailPage() {
         a.href = url;
         a.download = "";
         a.click();
+      } else if (mode === "preview") {
+        if (previewField === fieldId) {
+          // Toggle off if already previewing this field
+          setPreviewUrl(null);
+          setPreviewField(null);
+        } else {
+          setPreviewUrl(url);
+          setPreviewField(fieldId);
+        }
       } else {
         window.open(url, "_blank");
       }
@@ -539,61 +550,62 @@ export default function ApplicationDetailPage() {
           <CardContent className="space-y-4">
             {/* If there's a resume via file field or the resumeS3Key */}
             {fileFields.map((field) => (
-              <div key={field.id}>
-                <div className="flex items-center gap-2 mb-3">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleOpenFile(field.id, "download")}
-                    disabled={fileLoadingField === field.id}
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Download
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleOpenFile(field.id, "preview")}
-                    disabled={fileLoadingField === field.id}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    Preview
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleOpenFile(field.id, "tab")}
-                    disabled={fileLoadingField === field.id}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Open in new tab
-                  </Button>
-                  <Badge variant="neutral" className="ml-auto">
-                    PDF • pdf
-                  </Badge>
-                </div>
+              <div key={field.id} className="space-y-3">
+                {/* File row */}
                 <div className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <FileText className="h-5 w-5 text-[var(--color-text-muted)]" />
                     <div>
                       <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                        PDF Document
+                        {field.label}
                       </p>
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Click to open PDF in preview
+                        PDF / DOC
                       </p>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleOpenFile(field.id, "tab")}
-                    disabled={fileLoadingField === field.id}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    Open Preview
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleOpenFile(field.id, "preview")}
+                      disabled={fileLoadingField === field.id}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      {previewField === field.id ? "Hide Preview" : "Preview"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleOpenFile(field.id, "download")}
+                      disabled={fileLoadingField === field.id}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleOpenFile(field.id, "tab")}
+                      disabled={fileLoadingField === field.id}
+                      title="Open in new tab"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Inline preview panel */}
+                {previewField === field.id && previewUrl && (
+                  <div className="rounded-[var(--radius)] border border-[var(--color-border)] overflow-hidden">
+                    <iframe
+                      src={previewUrl}
+                      className="w-full"
+                      style={{ height: "70vh" }}
+                      title={`Preview — ${field.label}`}
+                    />
+                  </div>
+                )}
               </div>
             ))}
 
