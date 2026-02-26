@@ -6,6 +6,8 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "lsof -ti:3001 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; mkdir -p output/api output/web; npm run dev --workspace=apps/api > output/api/out.log 2>&1 & echo \"api pid: $!\"; npm run dev --workspace=apps/web > output/web/out.log 2>&1 & echo \"web pid: $!\"",
+    "stop": "lsof -ti:3001 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; echo \"stopped\"",
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",
     "build:api": "npm run build --workspace=apps/api",
