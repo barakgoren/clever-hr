@@ -24,3 +24,18 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
 export function verifyRefreshToken(token: string): { userId: number } {
   return jwt.verify(token, REFRESH_SECRET) as { userId: number };
 }
+
+export interface SuperAdminTokenPayload {
+  superAdminId: number;
+  role: 'superadmin';
+}
+
+export function signSuperAdminAccessToken(payload: SuperAdminTokenPayload): string {
+  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: '15m' });
+}
+
+export function verifySuperAdminAccessToken(token: string): SuperAdminTokenPayload {
+  const decoded = jwt.verify(token, ACCESS_SECRET) as SuperAdminTokenPayload;
+  if (decoded.role !== 'superadmin') throw new Error('Not a superadmin token');
+  return decoded;
+}

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { getPrismaConstraintFields } from '../lib/prismaErrors';
 
 export class AppError extends Error {
   constructor(
@@ -29,6 +30,14 @@ export function errorHandler(
 
   if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
     res.status(401).json({ success: false, error: 'Invalid or expired token' });
+    return;
+  }
+
+  // Prisma P2002 — unique constraint violation
+  if ((err as any)?.code === 'P2002') {
+    const fields = getPrismaConstraintFields(err);
+    const label = fields.length ? fields.join(', ') : 'field';
+    res.status(409).json({ success: false, error: `${label} already in use` });
     return;
   }
 

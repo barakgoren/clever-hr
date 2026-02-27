@@ -23,6 +23,10 @@ export type { SubmitApplicationInput, MoveApplicationStageInput, AddApplicationT
 export { sendEmailSchema, createEmailTemplateSchema, updateEmailTemplateSchema } from './schemas/email';
 export type { SendEmailInput, CreateEmailTemplateInput, UpdateEmailTemplateInput } from './schemas/email';
 
+export type { SuperAdmin } from './types/superAdmin';
+export { createSuperAdminSchema, superAdminLoginSchema } from './schemas/superAdmin';
+export type { CreateSuperAdminInput } from './schemas/superAdmin';
+
 // Legacy (keep ApiResponse for backwards compat)
 export interface ApiResponse<T = unknown> {
   success: boolean;

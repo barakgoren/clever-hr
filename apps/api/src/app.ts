@@ -13,6 +13,8 @@ import applicationsRoutes from "./routes/applications";
 import publicRoutes from "./routes/public";
 import adminRoutes from "./routes/admin";
 import emailTemplatesRoutes from "./routes/emailTemplates";
+import superAdminAuthRoutes from "./routes/superAdminAuth";
+import superAdminRoutes from "./routes/superAdmin";
 import { errorHandler } from "./middleware/errorHandler";
 
 export const app = express();
@@ -34,7 +36,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+    origin: (process.env.CORS_ORIGIN ?? "http://localhost:3000").split(",").map((s) => s.trim()),
     credentials: true,
   }),
 );
@@ -50,6 +52,8 @@ app.use("/api/applications", applicationsRoutes);
 app.use("/api/email-templates", emailTemplatesRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/superadmin/auth", superAdminAuthRoutes);
+app.use("/api/superadmin", superAdminRoutes);
 
 app.get("/api/health", (_req, res) => {
   console.log("Health check endpoint hit");

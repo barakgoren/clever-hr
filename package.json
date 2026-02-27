@@ -6,12 +6,14 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "lsof -ti:3001 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; mkdir -p output/api output/web; npm run dev --workspace=apps/api > output/api/out.log 2>&1 & echo \"api pid: $!\"; npm run dev --workspace=apps/web > output/web/out.log 2>&1 & echo \"web pid: $!\"",
-    "stop": "lsof -ti:3001 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; echo \"stopped\"",
+    "dev": "lsof -ti:3001 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; lsof -ti:4000 | xargs kill -9 2>/dev/null; mkdir -p output/api output/web output/admin; npm run dev --workspace=apps/api > output/api/out.log 2>&1 & echo \"api pid: $!\"; npm run dev --workspace=apps/web > output/web/out.log 2>&1 & echo \"web pid: $!\"; npm run dev --workspace=apps/admin > output/admin/out.log 2>&1 & echo \"admin pid: $!\"",
+    "stop": "lsof -ti:3001 | xargs kill -9 2>/dev/null; lsof -ti:3000 | xargs kill -9 2>/dev/null; lsof -ti:4000 | xargs kill -9 2>/dev/null; echo \"stopped\"",
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",
+    "dev:admin": "npm run dev --workspace=apps/admin",
     "build:api": "npm run build --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web",
+    "build:admin": "npm run build --workspace=apps/admin",
     "test:report": "node scripts/test-and-report.mjs"
   }
 }

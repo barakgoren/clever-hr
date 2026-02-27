@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { requireAdminSecret } from '../middleware/adminSecret';
 import { companyService } from '../services/company.service';
+import { superAdminService } from '../services/superAdmin.service';
+import { createSuperAdminSchema } from '@repo/shared';
 import prisma from '../lib/prisma';
 
 const router = Router();
@@ -79,6 +81,17 @@ router.patch('/companies/:id/plan', async (req: Request, res: Response, next: Ne
       select: { id: true, name: true, slug: true, plan: true },
     });
     res.json({ success: true, data: company });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/admin/superadmins
+router.post('/superadmins', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = createSuperAdminSchema.parse(req.body);
+    const sa = await superAdminService.create(body.username, body.name, body.password);
+    res.status(201).json({ success: true, data: sa });
   } catch (err) {
     next(err);
   }

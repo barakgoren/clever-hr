@@ -63,6 +63,8 @@ function ImageUploadBox({
 function CompanyTab({ company }: { company: Company }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(company.name);
+  const [slug, setSlug] = useState(company.slug);
+  const [description, setDescription] = useState(company.description ?? '');
   const [selectedAdminIds, setSelectedAdminIds] = useState<number[]>([]);
 
   const { data: users = [] } = useQuery({
@@ -77,9 +79,14 @@ function CompanyTab({ company }: { company: Company }) {
   }, [users]);
 
   const updateMutation = useMutation({
-    mutationFn: () => companyService.update({ name }),
+    mutationFn: () => companyService.update({ name, slug, description: description || null }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['company'] }),
   });
+
+  const slugError =
+    updateMutation.isError && (updateMutation.error as any)?.response?.data?.error?.toLowerCase().includes('slug')
+      ? ((updateMutation.error as any)?.response?.data?.error as string)
+      : null;
 
   const logoMutation = useMutation({
     mutationFn: (file: File) => companyService.uploadLogo(file),
@@ -115,6 +122,31 @@ function CompanyTab({ company }: { company: Company }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+
+          <Input
+            id="company-slug"
+            label="Slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            error={slugError ?? undefined}
+            placeholder="my-company"
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="company-description" className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+              Description
+            </label>
+            <textarea
+              id="company-description"
+              rows={3}
+              maxLength={500}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A short description of your company…"
+              className="w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent transition-colors"
+            />
+            <p className="text-[10px] text-[var(--color-text-muted)] text-right">{description.length} / 500</p>
+          </div>
 
           <div className="space-y-2">
             <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] flex items-center gap-1">

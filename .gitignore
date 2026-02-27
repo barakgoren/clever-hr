@@ -4,6 +4,8 @@ node_modules/
 # Next.js
 apps/web/.next/
 apps/web/out/
+apps/admin/.next/
+apps/admin/out/
 
 # TypeScript build info
 *.tsbuildinfo

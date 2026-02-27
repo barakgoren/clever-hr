@@ -63,7 +63,7 @@ model User {
 model Role {
   id              Int      @id @default(autoincrement())
   companyId       Int
-  createdByUserId Int
+  createdByUserId Int?
   name            String
   color           String   @default("#6366f1")
   description     String?
@@ -77,7 +77,7 @@ model Role {
   updatedAt       DateTime @updatedAt
 
   company      Company       @relation(fields: [companyId], references: [id])
-  createdBy    User          @relation(fields: [createdByUserId], references: [id])
+  createdBy    User?         @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   stages       Stage[]
   applications Application[]
 }
@@ -135,7 +135,7 @@ model ApplicationEmail {
   id            Int      @id @default(autoincrement())
   applicationId Int
   companyId     Int
-  senderUserId  Int
+  senderUserId  Int?
   to            String
   subject       String
   body          String
@@ -147,7 +147,7 @@ model ApplicationEmail {
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   company     Company     @relation(fields: [companyId], references: [id])
-  sender      User        @relation(fields: [senderUserId], references: [id])
+  sender      User?       @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
 
   @@index([applicationId, createdAt])
   @@index([companyId])
@@ -173,4 +173,25 @@ model EmailTemplate {
   updatedAt DateTime @updatedAt
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model SuperAdmin {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens SuperAdminRefreshToken[]
+}
+
+model SuperAdminRefreshToken {
+  id           Int      @id @default(autoincrement())
+  superAdminId Int
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  superAdmin SuperAdmin @relation(fields: [superAdminId], references: [id], onDelete: Cascade)
 }
