@@ -124,6 +124,20 @@ export const applicationService = {
     await prisma.application.delete({ where: { id } });
   },
 
+  async deleteMany(ids: number[], companyId: number) {
+    const apps = await prisma.application.findMany({
+      where: { id: { in: ids }, companyId },
+      select: { id: true, resumeS3Key: true },
+    });
+    if (apps.length !== ids.length) {
+      throw new AppError(403, 'Some applications do not belong to your company');
+    }
+    await Promise.all(
+      apps.filter((a) => a.resumeS3Key).map((a) => s3Service.delete(a.resumeS3Key!).catch(() => {}))
+    );
+    await prisma.application.deleteMany({ where: { id: { in: ids } } });
+  },
+
   async getFilePresignedUrl(id: number, companyId: number, fieldId: string) {
     const app = await this.getById(id, companyId);
     const key = fieldId === 'resume' ? app.resumeS3Key : null;

@@ -29,6 +29,10 @@ export const applicationService = {
     await apiClient.delete(`/api/applications/${id}`);
   },
 
+  async deleteMany(ids: number[]): Promise<void> {
+    await apiClient.delete('/api/applications', { data: { ids } });
+  },
+
   async getFileUrl(id: number, fieldId: string): Promise<string> {
     const { data } = await apiClient.get(`/api/applications/${id}/files/${fieldId}`);
     return data.data.url;

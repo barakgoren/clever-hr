@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Eye, Trash2, Download, Search } from 'lucide-react';
@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BulkActionBar, type BulkAction } from '@/components/BulkActionBar';
 import {
   Select,
   SelectContent,
@@ -18,11 +19,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDate } from '@/lib/utils';
+import type { ApplicationWithRelations } from '@repo/shared';
 
 export default function ApplicationsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['applications'],
@@ -39,6 +43,14 @@ export default function ApplicationsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['applications'] }),
   });
 
+  const deleteManyMutation = useMutation({
+    mutationFn: applicationService.deleteMany,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      setSelectedIds(new Set());
+    },
+  });
+
   const filtered = useMemo(() => {
     return applications.filter((app) => {
       const fullName = String(app.formData?.full_name ?? '').toLowerCase();
@@ -53,6 +65,61 @@ export default function ApplicationsPage() {
       return matchesSearch && matchesRole;
     });
   }, [applications, search, roleFilter]);
+
+  // Keep selection clean: remove IDs that are no longer in the filtered set
+  useEffect(() => {
+    const filteredIds = new Set(filtered.map((a) => a.id));
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => filteredIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [filtered]);
+
+  // Sync indeterminate state of header checkbox
+  const allFilteredSelected = filtered.length > 0 && filtered.every((a) => selectedIds.has(a.id));
+  const someSelected = filtered.some((a) => selectedIds.has(a.id));
+
+  useEffect(() => {
+    const el = headerCheckboxRef.current;
+    if (!el) return;
+    el.indeterminate = someSelected && !allFilteredSelected;
+  }, [someSelected, allFilteredSelected]);
+
+  function toggleAll() {
+    if (allFilteredSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((a) => next.delete(a.id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((a) => next.add(a.id));
+        return next;
+      });
+    }
+  }
+
+  function toggleOne(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  const bulkActions: BulkAction<ApplicationWithRelations>[] = [
+    {
+      id: 'delete',
+      label: 'Delete',
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      variant: 'danger',
+      confirm: `Delete ${selectedIds.size} application${selectedIds.size === 1 ? '' : 's'}? This cannot be undone.`,
+      onAction: (items) => deleteManyMutation.mutateAsync(items.map((i) => i.id)),
+      isPending: deleteManyMutation.isPending,
+    },
+  ];
 
   return (
     <div className="space-y-5">
@@ -119,7 +186,9 @@ export default function ApplicationsPage() {
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-sm font-medium text-[var(--color-text-primary)]">No applications found</p>
             <p className="text-xs text-[var(--color-text-muted)] mt-1">
-              {search || roleFilter !== 'all' ? 'Try adjusting your filters' : 'Applications will appear here once submitted'}
+              {search || roleFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Applications will appear here once submitted'}
             </p>
           </div>
         ) : (
@@ -127,7 +196,13 @@ export default function ApplicationsPage() {
             <thead>
               <tr className="border-b border-[var(--color-border)]">
                 <th className="w-10 px-4 py-3">
-                  <input type="checkbox" className="rounded" />
+                  <input
+                    ref={headerCheckboxRef}
+                    type="checkbox"
+                    className="rounded cursor-pointer"
+                    checked={allFilteredSelected}
+                    onChange={toggleAll}
+                  />
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                   #
@@ -152,10 +227,23 @@ export default function ApplicationsPage() {
             <tbody className="divide-y divide-[var(--color-border)]">
               {filtered.map((app) => {
                 const fullName = String(app.formData?.full_name ?? '—');
+                const isSelected = selectedIds.has(app.id);
                 return (
-                  <tr key={app.id} className="hover:bg-[var(--color-surface-subtle)] transition-colors">
+                  <tr
+                    key={app.id}
+                    className={`transition-colors ${
+                      isSelected
+                        ? 'bg-[var(--color-brand-50,#eff6ff)]'
+                        : 'hover:bg-[var(--color-surface-subtle)]'
+                    }`}
+                  >
                     <td className="px-4 py-3">
-                      <input type="checkbox" className="rounded" />
+                      <input
+                        type="checkbox"
+                        className="rounded cursor-pointer"
+                        checked={isSelected}
+                        onChange={() => toggleOne(app.id)}
+                      />
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">{app.id}</td>
                     <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">
@@ -166,7 +254,10 @@ export default function ApplicationsPage() {
                         className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
                         style={{ backgroundColor: `${app.role.color}1A`, color: app.role.color }}
                       >
-                        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: app.role.color }} />
+                        <span
+                          className="h-1.5 w-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: app.role.color }}
+                        />
                         {app.role.name}
                       </span>
                     </td>
@@ -174,7 +265,10 @@ export default function ApplicationsPage() {
                       {app.currentStage ? (
                         <span
                           className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
-                          style={{ backgroundColor: `${app.currentStage.color}1A`, color: app.currentStage.color }}
+                          style={{
+                            backgroundColor: `${app.currentStage.color}1A`,
+                            color: app.currentStage.color,
+                          }}
                         >
                           {app.currentStage.name}
                         </span>
@@ -214,6 +308,13 @@ export default function ApplicationsPage() {
           </table>
         )}
       </Card>
+
+      <BulkActionBar
+        selectedIds={selectedIds}
+        allItems={applications}
+        actions={bulkActions}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
     </div>
   );
 }

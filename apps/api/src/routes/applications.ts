@@ -38,6 +38,14 @@ router.get('/:id', async (req: AuthRequest, res: Response, next: NextFunction) =
   } catch (err) { next(err); }
 });
 
+router.delete('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { ids } = z.object({ ids: z.array(z.number().int().positive()).min(1) }).parse(req.body);
+    await applicationService.deleteMany(ids, req.user!.companyId);
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
 router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     await applicationService.delete(parseInt(req.params.id), req.user!.companyId);
