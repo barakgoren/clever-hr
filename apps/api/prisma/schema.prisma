@@ -19,6 +19,11 @@ enum RoleType {
   remote
 }
 
+enum Plan {
+  team
+  ultimate
+}
+
 model Company {
   id           Int      @id @default(autoincrement())
   name         String
@@ -26,6 +31,7 @@ model Company {
   description  String?
   heroImageUrl String?
   logoUrl      String?
+  plan         Plan     @default(team)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

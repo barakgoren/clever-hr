@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus, Eye, Pencil } from 'lucide-react';
 import { roleService } from '@/services/role.service';
 import { companyService } from '@/services/company.service';
+import { usePlan } from '@/hooks/usePlan';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -13,6 +14,7 @@ import { formatDate } from '@/lib/utils';
 
 export default function TemplatesPage() {
   const queryClient = useQueryClient();
+  const { isAtActiveRoleLimit } = usePlan();
 
   const { data: roles = [], isLoading } = useQuery({
     queryKey: ['roles'],
@@ -27,7 +29,10 @@ export default function TemplatesPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
       roleService.toggleActive(id, isActive),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['roles'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ['company-usage'] });
+    },
   });
 
   if (isLoading) {
@@ -48,24 +53,38 @@ export default function TemplatesPage() {
   return (
     <div>
       <div className="flex items-center justify-end mb-6">
-        <Link href="/dashboard/templates/new">
-          <Button size="sm">
+        {isAtActiveRoleLimit ? (
+          <Button size="sm" disabled title="Active role limit reached for your plan">
             <Plus className="h-4 w-4" />
             Add Template
           </Button>
-        </Link>
+        ) : (
+          <Link href="/dashboard/templates/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              Add Template
+            </Button>
+          </Link>
+        )}
       </div>
 
       {roles.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="text-sm font-medium text-[var(--color-text-primary)]">No templates yet</p>
           <p className="text-xs text-[var(--color-text-muted)] mt-1">Create your first job template to get started.</p>
-          <Link href="/dashboard/templates/new">
-            <Button size="sm" className="mt-4">
+          {isAtActiveRoleLimit ? (
+            <Button size="sm" className="mt-4" disabled title="Active role limit reached for your plan">
               <Plus className="h-4 w-4" />
               Add Template
             </Button>
-          </Link>
+          ) : (
+            <Link href="/dashboard/templates/new">
+              <Button size="sm" className="mt-4">
+                <Plus className="h-4 w-4" />
+                Add Template
+              </Button>
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
@@ -105,9 +124,12 @@ export default function TemplatesPage() {
                   <span className="text-xs text-[var(--color-text-muted)]">Active</span>
                   <Switch
                     checked={role.isActive}
-                    onCheckedChange={(checked) =>
-                      toggleMutation.mutate({ id: role.id, isActive: checked })
-                    }
+                    disabled={!role.isActive && isAtActiveRoleLimit}
+                    title={!role.isActive && isAtActiveRoleLimit ? 'Active role limit reached for your plan' : undefined}
+                    onCheckedChange={(checked) => {
+                      if (checked && isAtActiveRoleLimit) return;
+                      toggleMutation.mutate({ id: role.id, isActive: checked });
+                    }}
                   />
                 </div>
               </div>

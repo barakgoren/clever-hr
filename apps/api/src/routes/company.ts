@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { requireAuth, requireAdmin, AuthRequest } from '../middleware/auth';
 import { companyService } from '../services/company.service';
+import { planService } from '../services/plan.service';
 import { s3Service } from '../services/s3.service';
 import { updateCompanySchema } from '@repo/shared';
 
@@ -14,6 +15,15 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const company = await companyService.getById(req.user!.companyId);
     res.json({ success: true, data: company });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/usage', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const usage = await planService.getUsage(req.user!.companyId);
+    res.json({ success: true, data: usage });
   } catch (err) {
     next(err);
   }

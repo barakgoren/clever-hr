@@ -1,5 +1,7 @@
 // Types
 export type { Company, CompanyPublic } from './types/company';
+export type { Plan, PlanLimits, CompanyUsage } from './types/plan';
+export { PLAN_LIMITS } from './types/plan';
 export type { User, UserRole } from './types/user';
 export type { Role, CustomField, FieldType, RoleType } from './types/role';
 export type { Stage } from './types/stage';

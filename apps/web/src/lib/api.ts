@@ -33,7 +33,7 @@ apiClient.interceptors.response.use(
       } catch {
         clearAccessToken();
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          // window.location.href = '/login';
+          window.location.href = '/login';
         }
       }
     }

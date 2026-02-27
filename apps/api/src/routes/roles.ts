@@ -2,6 +2,7 @@ import { Router, Response, NextFunction } from 'express';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { roleService } from '../services/role.service';
 import { stageService } from '../services/stage.service';
+import { planService } from '../services/plan.service';
 import { createRoleSchema, updateRoleSchema } from '@repo/shared';
 import { z } from 'zod';
 
@@ -19,6 +20,7 @@ router.get('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
 router.post('/', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const body = createRoleSchema.parse(req.body);
+    await planService.checkActiveRoleLimit(req.user!.companyId);
     const role = await roleService.create(req.user!.companyId, req.user!.userId, body);
     res.status(201).json({ success: true, data: role });
   } catch (err) { next(err); }
@@ -49,6 +51,9 @@ router.delete('/:id', async (req: AuthRequest, res: Response, next: NextFunction
 router.patch('/:id/active', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { isActive } = z.object({ isActive: z.boolean() }).parse(req.body);
+    if (isActive) {
+      await planService.checkActiveRoleLimit(req.user!.companyId);
+    }
     const role = await roleService.toggleActive(parseInt(req.params.id), req.user!.companyId, isActive);
     res.json({ success: true, data: role });
   } catch (err) { next(err); }
@@ -70,6 +75,7 @@ router.post('/:roleId/stages', async (req: AuthRequest, res: Response, next: Nex
       color: z.string().min(1).optional(),
       icon: z.string().min(1).optional(),
     }).parse(req.body);
+    await planService.checkStageLimit(req.user!.companyId, parseInt(req.params.roleId));
     const stage = await stageService.create(parseInt(req.params.roleId), req.user!.companyId, { name, order, color, icon });
     res.status(201).json({ success: true, data: stage });
   } catch (err) { next(err); }

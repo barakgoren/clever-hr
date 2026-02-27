@@ -4,6 +4,7 @@ import { applicationService } from '../services/application.service';
 import { addApplicationTimelineSchema, moveApplicationStageSchema, sendEmailSchema } from '@repo/shared';
 import { previewEmail, sendEmail } from '../services/email.service';
 import { emailTemplateService } from '../services/emailTemplate.service';
+import { planService } from '../services/plan.service';
 import prisma from '../lib/prisma';
 import { z } from 'zod';
 
@@ -79,6 +80,7 @@ router.post('/:id/timeline', async (req: AuthRequest, res: Response, next: NextF
 router.post('/:id/email', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { to, subject, body, templateId } = sendEmailSchema.parse(req.body);
+    await planService.checkEmailLimit(req.user!.companyId);
     const application = await applicationService.getById(
       parseInt(req.params.id),
       req.user!.companyId

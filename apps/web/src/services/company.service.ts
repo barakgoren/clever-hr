@@ -1,6 +1,5 @@
 import { apiClient } from '@/lib/api';
-import type { Company } from '@repo/shared';
-import type { UpdateCompanyInput } from '@repo/shared';
+import type { Company, CompanyUsage, UpdateCompanyInput } from '@repo/shared';
 
 export const companyService = {
   async get(): Promise<Company> {
@@ -24,6 +23,11 @@ export const companyService = {
     const form = new FormData();
     form.append('file', file);
     const { data } = await apiClient.post('/api/company/hero', form);
+    return data.data;
+  },
+
+  async getUsage(): Promise<CompanyUsage> {
+    const { data } = await apiClient.get('/api/company/usage');
     return data.data;
   },
 };

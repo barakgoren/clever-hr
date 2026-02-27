@@ -11,6 +11,7 @@ import {
   LogOut,
   Briefcase,
   Mail,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +26,7 @@ const NAV = [
   { href: "/dashboard/templates", label: "Templates", icon: Layers },
   { href: "/dashboard/users", label: "Users", icon: Users },
   { href: "/dashboard/email-templates", label: "Email Templates", icon: Mail },
+  { href: "/dashboard/usage", label: "Usage", icon: BarChart2 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

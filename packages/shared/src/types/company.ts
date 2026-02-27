@@ -1,3 +1,5 @@
+import type { Plan } from './plan';
+
 export interface Company {
   id: number;
   name: string;
@@ -5,6 +7,7 @@ export interface Company {
   description: string | null;
   heroImageUrl: string | null;
   logoUrl: string | null;
+  plan: Plan;
   createdAt: string;
   updatedAt: string;
 }

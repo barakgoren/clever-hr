@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { roleService } from "@/services/role.service";
 import { stageService } from "@/services/stage.service";
+import { usePlan } from "@/hooks/usePlan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,6 +102,8 @@ function newField(): CustomField {
 export function RoleForm({ role }: { role?: Role }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { stagesAtLimit } = usePlan();
+  const atStageLimit = role ? stagesAtLimit(role.id) : false;
 
   const [form, setForm] = useState<RoleFormData>({
     name: role?.name ?? "",
@@ -184,6 +187,7 @@ export function RoleForm({ role }: { role?: Role }) {
         icon: newStageIcon,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-usage"] });
       setNewStageName("");
       setNewStageColor("#6366f1");
       setNewStageIcon("flag");
@@ -582,7 +586,8 @@ export function RoleForm({ role }: { role?: Role }) {
               <input
                 type="text"
                 value={newStageName}
-                placeholder="Add a new stage"
+                placeholder={atStageLimit ? "Stage limit reached" : "Add a new stage"}
+                disabled={atStageLimit}
                 onChange={(e) => setNewStageName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -590,16 +595,22 @@ export function RoleForm({ role }: { role?: Role }) {
                     handleAddStage();
                   }
                 }}
-                className="flex-1 rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent"
+                className="flex-1 rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               />
               <Button
                 type="button"
                 size="sm"
-                disabled={!newStageName.trim() || stageBusy}
+                disabled={!newStageName.trim() || stageBusy || atStageLimit}
+                title={atStageLimit ? "Stage limit reached for your plan" : undefined}
                 onClick={handleAddStage}
               >
                 Add Stage
               </Button>
+              {atStageLimit && (
+                <p className="text-xs text-amber-600 mt-1 w-full">
+                  Stage limit reached for your plan (4 max on Team).
+                </p>
+              )}
             </div>
           ) : (
             <p className="text-xs text-[var(--color-text-muted)]">

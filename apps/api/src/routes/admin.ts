@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import { requireAdminSecret } from '../middleware/adminSecret';
 import { companyService } from '../services/company.service';
 import prisma from '../lib/prisma';
@@ -62,6 +63,22 @@ router.post('/companies/:id/users', async (req: Request, res: Response, next: Ne
       select: { id: true, name: true, username: true, email: true, role: true, companyId: true, createdAt: true },
     });
     res.status(201).json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/admin/companies/:id/plan
+router.patch('/companies/:id/plan', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const companyId = parseInt(req.params.id);
+    const { plan } = z.object({ plan: z.enum(['team', 'ultimate']) }).parse(req.body);
+    const company = await prisma.company.update({
+      where: { id: companyId },
+      data: { plan },
+      select: { id: true, name: true, slug: true, plan: true },
+    });
+    res.json({ success: true, data: company });
   } catch (err) {
     next(err);
   }

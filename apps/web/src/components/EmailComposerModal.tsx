@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { emailService } from '@/services/email.service';
+import { usePlan } from '@/hooks/usePlan';
 
 interface EmailComposerModalProps {
   open: boolean;
@@ -41,6 +42,7 @@ export function EmailComposerModal({
   onSent,
 }: EmailComposerModalProps) {
   const queryClient = useQueryClient();
+  const { isAtEmailLimit, usage, limits } = usePlan();
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -81,6 +83,7 @@ export function EmailComposerModal({
         templateId: selectedTemplateId && selectedTemplateId !== 'none' ? Number(selectedTemplateId) : undefined,
       }),
     onSuccess: (sendStatus) => {
+      queryClient.invalidateQueries({ queryKey: ['company-usage'] });
       if (sendStatus === 'sent') {
         setStatus('success');
         queryClient.invalidateQueries({ queryKey: ['application', String(applicationId)] });
@@ -99,7 +102,7 @@ export function EmailComposerModal({
     },
   });
 
-  const canSend = subject.trim().length > 0 && body.trim().length > 0 && !sendMutation.isPending;
+  const canSend = subject.trim().length > 0 && body.trim().length > 0 && !sendMutation.isPending && !isAtEmailLimit;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -112,6 +115,17 @@ export function EmailComposerModal({
         </DialogHeader>
 
         <div className="space-y-4">
+          {limits?.emailsPerMonth != null && (
+            <div className={`rounded-[var(--radius)] border px-3 py-2 text-xs ${isAtEmailLimit ? 'border-red-200 bg-red-50 text-red-700 font-semibold' : 'border-[var(--color-border)] bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)]'}`}>
+              {usage?.emailsSentThisMonth ?? 0} / {limits.emailsPerMonth} emails sent this month
+              {isAtEmailLimit && ' — limit reached'}
+            </div>
+          )}
+          {isAtEmailLimit && (
+            <p className="rounded-[var(--radius)] bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-700">
+              Monthly email limit reached. Emails will reset on the 1st of next month.
+            </p>
+          )}
           {templates.length > 0 && (
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
