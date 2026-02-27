@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { applicationService } from "@/services/application.service";
 import { roleService } from "@/services/role.service";
+import { companyService } from "@/services/company.service";
 import { EmailComposerModal } from "@/components/EmailComposerModal";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -116,6 +117,8 @@ export default function ApplicationDetailPage() {
     enabled: !!application?.roleId,
   });
 
+  const { data: company } = useQuery({ queryKey: ["company"], queryFn: companyService.get });
+
   const stageMutation = useMutation({
     mutationFn: ({ stageId }: { stageId: number | null }) =>
       applicationService.moveStage(Number(id), stageId),
@@ -148,6 +151,18 @@ export default function ApplicationDetailPage() {
     const current = application.currentStageId ?? stages[0]?.id;
     if (current) setTimelineStageId(String(current));
   }, [application, stages, timelineStageId]);
+
+  useEffect(() => {
+    const applicantName = application?.formData?.full_name as string | undefined;
+    const roleName = application?.role?.name;
+    const companyName = company?.name;
+    if (applicantName && roleName && companyName) {
+      document.title = `${applicantName} — ${roleName} | ${companyName}`;
+    }
+    return () => {
+      document.title = "Clever HR";
+    };
+  }, [application, company]);
 
   const handleOpenFile = async (
     fieldId: string,
