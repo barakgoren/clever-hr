@@ -1,18 +1,19 @@
-import { stringify } from 'csv-stringify/sync';
-import prisma from '../lib/prisma';
-import { AppError } from '../middleware/errorHandler';
-import { s3Service } from './s3.service';
+import { stringify } from "csv-stringify/sync";
+import prisma from "../lib/prisma";
+import { AppError } from "../middleware/errorHandler";
+import { s3Service } from "./s3.service";
+import { ruleService } from "./rule.service";
 
 export const applicationService = {
   async list(companyId: number, filters: { roleId?: number; search?: string }) {
-    return prisma.application.findMany({
+    const apps = await prisma.application.findMany({
       where: {
         companyId,
         ...(filters.roleId ? { roleId: filters.roleId } : {}),
         ...(filters.search
           ? {
               formData: {
-                path: ['full_name'],
+                path: ["full_name"],
                 string_contains: filters.search,
               },
             }
@@ -22,7 +23,22 @@ export const applicationService = {
         role: { select: { id: true, name: true, color: true } },
         currentStage: { select: { id: true, name: true, color: true, icon: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Gather unique roleIds and fetch all relevant rules in one query
+    const roleIds = [...new Set(apps.map((a) => a.roleId))];
+    const rules = roleIds.length ? await prisma.rule.findMany({ where: { roleId: { in: roleIds }, companyId } }) : [];
+    const rulesByRole = new Map<number, typeof rules>();
+    for (const rule of rules) {
+      if (!rulesByRole.has(rule.roleId)) rulesByRole.set(rule.roleId, []);
+      rulesByRole.get(rule.roleId)!.push(rule);
+    }
+
+    return apps.map((app) => {
+      const roleRules = rulesByRole.get(app.roleId) ?? [];
+      const { totalScore } = ruleService.evaluateRulesForApplication({ resumeS3Key: app.resumeS3Key, formData: app.formData as Record<string, string | boolean>, extractedTexts: app.extractedTexts as Record<string, string> }, roleRules);
+      return { ...app, score: totalScore };
     });
   },
 
@@ -32,29 +48,27 @@ export const applicationService = {
       include: {
         role: { select: { id: true, name: true, color: true, customFields: true } },
         currentStage: { select: { id: true, name: true, color: true, icon: true } },
-        timeline: { orderBy: { createdAt: 'asc' } },
+        timeline: { orderBy: { createdAt: "asc" } },
         emails: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           include: { sender: { select: { id: true, name: true, email: true } } },
         },
       },
     });
-    if (!app) throw new AppError(404, 'Application not found');
-    return app;
+    if (!app) throw new AppError(404, "Application not found");
+
+    const rules = await prisma.rule.findMany({ where: { roleId: app.roleId, companyId } });
+    const { totalScore, breakdown } = ruleService.evaluateRulesForApplication({ resumeS3Key: app.resumeS3Key, formData: app.formData as Record<string, string | boolean>, extractedTexts: app.extractedTexts as Record<string, string> }, rules);
+    return { ...app, score: totalScore, breakdown };
   },
 
-  async submit(
-    roleId: number,
-    companyId: number,
-    formData: Record<string, string | boolean>,
-    file?: { buffer: Buffer; originalname: string; mimetype: string }
-  ) {
-    const email = typeof formData.email === 'string' ? formData.email.toLowerCase().trim() : null;
+  async submit(roleId: number, companyId: number, formData: Record<string, string | boolean>, file?: { buffer: Buffer; originalname: string; mimetype: string }) {
+    const email = typeof formData.email === "string" ? formData.email.toLowerCase().trim() : null;
 
     // Enforce one application per email per role
     if (email) {
       const existing = await prisma.application.findFirst({ where: { roleId, email } });
-      if (existing) throw new AppError(409, 'An application with this email already exists for this role.');
+      if (existing) throw new AppError(409, "An application with this email already exists for this role.");
     }
 
     // Create application first to get ID
@@ -64,12 +78,7 @@ export const applicationService = {
 
     // Upload resume if provided
     if (file) {
-      const key = s3Service.keys.applicationFile(
-        companyId,
-        application.id,
-        'resume',
-        file.originalname
-      );
+      const key = s3Service.keys.applicationFile(companyId, application.id, "resume", file.originalname);
       await s3Service.upload(key, file.buffer, file.mimetype);
       await prisma.application.update({ where: { id: application.id }, data: { resumeS3Key: key } });
     }
@@ -83,21 +92,17 @@ export const applicationService = {
     if (stageId !== null) {
       const app = await prisma.application.findUnique({ where: { id } });
       const stage = await prisma.stage.findFirst({ where: { id: stageId, roleId: app!.roleId } });
-      if (!stage) throw new AppError(400, 'Stage does not belong to this application\'s role');
+      if (!stage) throw new AppError(400, "Stage does not belong to this application's role");
     }
 
     return prisma.application.update({ where: { id }, data: { currentStageId: stageId } });
   },
 
-  async addTimelineEntry(
-    id: number,
-    companyId: number,
-    data: { stageId: number; description?: string }
-  ) {
+  async addTimelineEntry(id: number, companyId: number, data: { stageId: number; description?: string }) {
     const app = await this.getById(id, companyId);
 
     const stage = await prisma.stage.findFirst({ where: { id: data.stageId, roleId: app.roleId } });
-    if (!stage) throw new AppError(400, 'Stage does not belong to this application\'s role');
+    if (!stage) throw new AppError(400, "Stage does not belong to this application's role");
 
     await prisma.$transaction(async (tx) => {
       await tx.applicationTimeline.create({
@@ -130,24 +135,22 @@ export const applicationService = {
       select: { id: true, resumeS3Key: true },
     });
     if (apps.length !== ids.length) {
-      throw new AppError(403, 'Some applications do not belong to your company');
+      throw new AppError(403, "Some applications do not belong to your company");
     }
-    await Promise.all(
-      apps.filter((a) => a.resumeS3Key).map((a) => s3Service.delete(a.resumeS3Key!).catch(() => {}))
-    );
+    await Promise.all(apps.filter((a) => a.resumeS3Key).map((a) => s3Service.delete(a.resumeS3Key!).catch(() => {})));
     await prisma.application.deleteMany({ where: { id: { in: ids } } });
   },
 
   async getFilePresignedUrl(id: number, companyId: number, fieldId: string) {
     const app = await this.getById(id, companyId);
-    const key = fieldId === 'resume' ? app.resumeS3Key : null;
-    if (!key) throw new AppError(404, 'File not found');
+    const key = fieldId === "resume" ? app.resumeS3Key : null;
+    if (!key) throw new AppError(404, "File not found");
     return s3Service.getPresignedUrl(key);
   },
 
   async exportCsv(companyId: number): Promise<string> {
     const applications = await this.list(companyId, {});
-    if (applications.length === 0) return 'id,role,full_name,email,applied_at\n';
+    if (applications.length === 0) return "id,role,full_name,email,applied_at\n";
 
     type AppRow = (typeof applications)[number];
     const rows = applications.map((app: AppRow) => {
@@ -155,8 +158,8 @@ export const applicationService = {
       return {
         id: app.id,
         role: app.role.name,
-        full_name: fd.full_name ?? '',
-        email: fd.email ?? '',
+        full_name: fd.full_name ?? "",
+        email: fd.email ?? "",
         applied_at: app.createdAt.toISOString(),
       };
     });

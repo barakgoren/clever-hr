@@ -5,6 +5,7 @@ export interface Application {
   currentStageId: number | null;
   formData: Record<string, string | boolean>;
   resumeS3Key: string | null;
+  extractedTexts: Record<string, string>;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,4 +54,6 @@ export interface ApplicationWithRelations extends Application {
   } | null;
   timeline?: ApplicationTimelineEntry[];
   emails?: ApplicationEmailEntry[];
+  score?: number;
+  breakdown?: import('./rule').RuleMatchResult[];
 }

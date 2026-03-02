@@ -6,6 +6,7 @@ export type { User, UserRole } from './types/user';
 export type { Role, CustomField, FieldType, RoleType } from './types/role';
 export type { Stage } from './types/stage';
 export type { Application, ApplicationWithRelations, ApplicationTimelineEntry, ApplicationEmailEntry } from './types/application';
+export type { Rule, RuleCondition, RuleMatchResult, ConditionType, FileType } from './types/rule';
 
 // Schemas
 export { updateCompanySchema } from './schemas/company';
@@ -22,6 +23,9 @@ export type { SubmitApplicationInput, MoveApplicationStageInput, AddApplicationT
 
 export { sendEmailSchema, createEmailTemplateSchema, updateEmailTemplateSchema } from './schemas/email';
 export type { SendEmailInput, CreateEmailTemplateInput, UpdateEmailTemplateInput } from './schemas/email';
+
+export { createRuleSchema, updateRuleSchema } from './schemas/rule';
+export type { CreateRuleInput, UpdateRuleInput } from './schemas/rule';
 
 export type { SuperAdmin } from './types/superAdmin';
 export { createSuperAdminSchema, superAdminLoginSchema } from './schemas/superAdmin';

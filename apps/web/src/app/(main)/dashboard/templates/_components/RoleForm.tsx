@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Flag, Star, Check, Clock, PhoneCall, Mail, Calendar, MessageSquare, User, Plus, Trash2, X, Settings, Lock } from "lucide-react";
+import { ArrowDown, ArrowUp, Flag, Star, Check, Clock, PhoneCall, Mail, Calendar, MessageSquare, User, Plus, Trash2, X, Settings, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import { roleService } from "@/services/role.service";
 import { stageService } from "@/services/stage.service";
+import { ruleService } from "@/services/rule.service";
 import { usePlan } from "@/hooks/usePlan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Role, CustomField, FieldType, RoleType, Stage } from "@repo/shared";
+import type { Role, CustomField, FieldType, RoleType, Stage, Rule, RuleCondition, ConditionType } from "@repo/shared";
 
 type RoleFormData = {
   name: string;
@@ -93,6 +94,14 @@ export function RoleForm({ role }: { role?: Role }) {
   const [newStageColor, setNewStageColor] = useState("#6366f1");
   const [newStageIcon, setNewStageIcon] = useState("flag");
   const [stageDrafts, setStageDrafts] = useState<Record<number, { name: string; color: string; icon: string }>>({});
+
+  // Rules state
+  type RuleDraft = { name: string; score: string; conditions: Array<{ type: ConditionType; fieldId: string; value: string; fileType: string }> };
+  const emptyRuleDraft = (): RuleDraft => ({ name: "", score: "", conditions: [{ type: "field_contains", fieldId: "", value: "", fileType: "pdf" }] });
+  const [showRuleForm, setShowRuleForm] = useState(false);
+  const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
+  const [ruleDraft, setRuleDraft] = useState<RuleDraft>(emptyRuleDraft());
+  const [expandedBreakdown, setExpandedBreakdown] = useState<number | null>(null);
 
   const { data: stages = [], isLoading: stagesLoading } = useQuery({
     queryKey: ["stages", role?.id],
@@ -176,6 +185,75 @@ export function RoleForm({ role }: { role?: Role }) {
   });
 
   const stageBusy = addStageMutation.isPending || updateStageMutation.isPending || deleteStageMutation.isPending || reorderStages.isPending;
+
+  const { data: rules = [] } = useQuery<Rule[]>({
+    queryKey: ["rules", role?.id],
+    queryFn: () => ruleService.list(role!.id),
+    enabled: !!role,
+  });
+
+  const saveRuleMutation = useMutation({
+    mutationFn: (draft: RuleDraft) => {
+      const conditions = draft.conditions.map((c) => ({
+        type: c.type,
+        fieldId: c.fieldId,
+        ...(c.type === "file_is_type" ? { fileType: c.fileType as "pdf" | "doc" | "docx" } : { value: c.value }),
+      })) as RuleCondition[];
+      const payload = { name: draft.name, score: parseInt(draft.score), conditions };
+      return editingRuleId
+        ? ruleService.update(role!.id, editingRuleId, payload)
+        : ruleService.create(role!.id, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rules", role?.id] });
+      setShowRuleForm(false);
+      setEditingRuleId(null);
+      setRuleDraft(emptyRuleDraft());
+    },
+  });
+
+  const deleteRuleMutation = useMutation({
+    mutationFn: (id: number) => ruleService.delete(role!.id, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rules", role?.id] }),
+  });
+
+  const allFields = form.customFields;
+  const fileFieldIds = new Set(allFields.filter((f) => f.type === "file").map((f) => f.id));
+
+  function getConditionTypes(fieldId: string): { value: ConditionType; label: string }[] {
+    if (!fieldId) return [];
+    if (fileFieldIds.has(fieldId) || fieldId === "resume") {
+      return [
+        { value: "file_is_type", label: "File is type" },
+        { value: "file_contains_keyword", label: "File contains keyword" },
+      ];
+    }
+    return [
+      { value: "field_equals", label: "Field equals" },
+      { value: "field_contains", label: "Field contains" },
+    ];
+  }
+
+  function startEditRule(rule: Rule) {
+    setEditingRuleId(rule.id);
+    setRuleDraft({
+      name: rule.name,
+      score: String(rule.score),
+      conditions: rule.conditions.map((c) => ({
+        type: c.type,
+        fieldId: c.fieldId,
+        value: c.value ?? "",
+        fileType: c.fileType ?? "pdf",
+      })),
+    });
+    setShowRuleForm(true);
+  }
+
+  function cancelRuleForm() {
+    setShowRuleForm(false);
+    setEditingRuleId(null);
+    setRuleDraft(emptyRuleDraft());
+  }
 
   const validate = () => {
     const e: typeof errors = {};
@@ -514,6 +592,203 @@ export function RoleForm({ role }: { role?: Role }) {
           </div>
         )}
       </section>
+
+      {/* Scoring Rules */}
+      {role && (
+        <section className="rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Scoring Rules</h2>
+              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Automatically score applicants based on field values or file content.</p>
+            </div>
+            {!showRuleForm && (
+              <Button type="button" variant="secondary" size="sm" onClick={() => { setEditingRuleId(null); setRuleDraft(emptyRuleDraft()); setShowRuleForm(true); }}>
+                <Plus className="h-3.5 w-3.5" />
+                Add Rule
+              </Button>
+            )}
+          </div>
+
+          {/* Rule list */}
+          {rules.length === 0 && !showRuleForm && (
+            <p className="text-sm text-[var(--color-text-muted)] text-center py-2">No rules yet. Add a rule to automatically score applicants.</p>
+          )}
+          <div className="space-y-2">
+            {rules.map((rule) => (
+              <div key={rule.id} className="rounded-[var(--radius)] border border-[var(--color-border)] px-3 py-2 bg-white">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium text-[var(--color-text-primary)] truncate">{rule.name}</span>
+                    <span className="inline-flex items-center rounded-full bg-[var(--color-brand-50)] px-2 py-0.5 text-xs font-semibold text-[var(--color-brand-600)] border border-[var(--color-brand-200)]">+{rule.score}</span>
+                    <button
+                      type="button"
+                      className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-0.5"
+                      onClick={() => setExpandedBreakdown(expandedBreakdown === rule.id ? null : rule.id)}
+                    >
+                      {rule.conditions.length} condition{rule.conditions.length !== 1 ? "s" : ""}
+                      {expandedBreakdown === rule.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button type="button" variant="secondary" size="sm" onClick={() => startEditRule(rule)}>Edit</Button>
+                    <Button type="button" variant="ghost" size="icon" className="text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]" disabled={deleteRuleMutation.isPending} onClick={() => deleteRuleMutation.mutate(rule.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {expandedBreakdown === rule.id && (
+                  <ul className="mt-2 space-y-1 pl-2 border-l-2 border-[var(--color-brand-200)]">
+                    {rule.conditions.map((c, i) => (
+                      <li key={i} className="text-xs text-[var(--color-text-muted)]">
+                        <span className="font-mono">{c.fieldId}</span> {c.type.replace(/_/g, " ")}
+                        {c.value ? <> &quot;{c.value}&quot;</> : null}
+                        {c.fileType ? <> ({c.fileType})</> : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Rule form */}
+          {showRuleForm && (
+            <div className="rounded-[var(--radius)] border border-[var(--color-brand-200)] bg-[var(--color-brand-50)] p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{editingRuleId ? "Edit Rule" : "New Rule"}</h3>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Rule Name</label>
+                  <input
+                    type="text"
+                    value={ruleDraft.name}
+                    onChange={(e) => setRuleDraft((d) => ({ ...d, name: e.target.value }))}
+                    placeholder="e.g. Has Python experience"
+                    className="mt-1 w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent"
+                  />
+                </div>
+                <div className="w-28">
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Score</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={ruleDraft.score}
+                    onChange={(e) => setRuleDraft((d) => ({ ...d, score: e.target.value }))}
+                    placeholder="e.g. 10"
+                    className="mt-1 w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Conditions */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Conditions (ALL must match)</label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRuleDraft((d) => ({ ...d, conditions: [...d.conditions, { type: "field_contains", fieldId: "", value: "", fileType: "pdf" }] }))}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Condition
+                  </Button>
+                </div>
+                {ruleDraft.conditions.map((cond, idx) => {
+                  const condTypes = getConditionTypes(cond.fieldId);
+                  const isFileCondition = cond.type === "file_is_type" || cond.type === "file_contains_keyword";
+                  return (
+                    <div key={idx} className="flex items-center gap-2 flex-wrap">
+                      {/* Field selector */}
+                      <select
+                        value={cond.fieldId}
+                        onChange={(e) => {
+                          const newFieldId = e.target.value;
+                          const newTypes = getConditionTypes(newFieldId);
+                          setRuleDraft((d) => ({
+                            ...d,
+                            conditions: d.conditions.map((c, i) =>
+                              i === idx ? { ...c, fieldId: newFieldId, type: newTypes[0]?.value ?? "field_contains" } : c
+                            ),
+                          }));
+                        }}
+                        className="rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
+                      >
+                        <option value="">Select field…</option>
+                        {allFields.map((f) => (
+                          <option key={f.id} value={f.id}>{f.label || f.id}</option>
+                        ))}
+                      </select>
+                      {/* Condition type */}
+                      {condTypes.length > 0 && (
+                        <select
+                          value={cond.type}
+                          onChange={(e) => setRuleDraft((d) => ({
+                            ...d,
+                            conditions: d.conditions.map((c, i) => i === idx ? { ...c, type: e.target.value as ConditionType } : c),
+                          }))}
+                          className="rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
+                        >
+                          {condTypes.map((t) => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </select>
+                      )}
+                      {/* Value / fileType */}
+                      {cond.type === "file_is_type" ? (
+                        <select
+                          value={cond.fileType}
+                          onChange={(e) => setRuleDraft((d) => ({
+                            ...d,
+                            conditions: d.conditions.map((c, i) => i === idx ? { ...c, fileType: e.target.value } : c),
+                          }))}
+                          className="rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
+                        >
+                          <option value="pdf">PDF</option>
+                          <option value="doc">DOC</option>
+                          <option value="docx">DOCX</option>
+                        </select>
+                      ) : !isFileCondition || cond.type === "file_contains_keyword" ? (
+                        <input
+                          type="text"
+                          value={cond.value}
+                          onChange={(e) => setRuleDraft((d) => ({
+                            ...d,
+                            conditions: d.conditions.map((c, i) => i === idx ? { ...c, value: e.target.value } : c),
+                          }))}
+                          placeholder={cond.type === "file_contains_keyword" ? "keyword…" : "value…"}
+                          className="flex-1 min-w-[120px] rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-500)]"
+                        />
+                      ) : null}
+                      {ruleDraft.conditions.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setRuleDraft((d) => ({ ...d, conditions: d.conditions.filter((_, i) => i !== idx) }))}
+                          className="text-[var(--color-danger)] hover:text-red-700"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!ruleDraft.name.trim() || !ruleDraft.score || saveRuleMutation.isPending}
+                  onClick={() => saveRuleMutation.mutate(ruleDraft)}
+                >
+                  {saveRuleMutation.isPending ? "Saving…" : editingRuleId ? "Update Rule" : "Save Rule"}
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={cancelRuleForm}>Cancel</Button>
+                {saveRuleMutation.isError && <p className="text-xs text-[var(--color-danger)]">Failed to save rule.</p>}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Submit */}
       <div className="flex items-center gap-3 pb-6">

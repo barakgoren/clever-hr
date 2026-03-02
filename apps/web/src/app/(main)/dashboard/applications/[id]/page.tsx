@@ -14,6 +14,7 @@ import {
   ExternalLink,
   FileText,
   ChevronDown,
+  ChevronUp,
   Flag,
   Star,
   Check,
@@ -105,6 +106,7 @@ export default function ApplicationDetailPage() {
   const [timelineStageId, setTimelineStageId] = useState<string>("");
   const [timelineDescription, setTimelineDescription] = useState("");
   const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   const { data: application, isLoading } = useQuery({
     queryKey: ["application", id],
@@ -337,6 +339,51 @@ export default function ApplicationDetailPage() {
             </div>
           </div>
 
+          {/* Score card */}
+          {(() => {
+            const score = (application as typeof application & { score?: number; breakdown?: Array<{ ruleId: number; ruleName: string; score: number; matched: boolean }> }).score;
+            const breakdown = (application as typeof application & { score?: number; breakdown?: Array<{ ruleId: number; ruleName: string; score: number; matched: boolean }> }).breakdown ?? [];
+            if (score === undefined) return null;
+            return (
+              <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">Score</p>
+                    <p className="mt-0.5 flex items-center gap-2">
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold border ${score > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>
+                        {score > 0 ? `+${score}` : score}
+                      </span>
+                    </p>
+                  </div>
+                  {breakdown.length > 0 && (
+                    <button
+                      className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                      onClick={() => setShowBreakdown((v) => !v)}
+                    >
+                      Rule breakdown
+                      {showBreakdown ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </button>
+                  )}
+                </div>
+                {showBreakdown && breakdown.length > 0 && (
+                  <div className="mt-3 space-y-1.5">
+                    {breakdown.map((r) => (
+                      <div key={r.ruleId} className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2 w-2 rounded-full ${r.matched ? 'bg-emerald-500' : 'bg-[var(--color-text-muted)]'}`} />
+                          <span className="text-sm text-[var(--color-text-primary)]">{r.ruleName}</span>
+                        </div>
+                        <span className={`text-xs font-semibold ${r.matched ? 'text-emerald-600' : 'text-[var(--color-text-muted)]'}`}>
+                          {r.matched ? `+${r.score}` : '—'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Stage selector */}
           {stages.length > 0 && (
             <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
@@ -355,7 +402,7 @@ export default function ApplicationDetailPage() {
                   })
                 }
               >
-                <SelectTrigger className="w-56">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Not placed" />
                 </SelectTrigger>
                 <SelectContent>

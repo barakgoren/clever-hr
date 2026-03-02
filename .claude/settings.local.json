@@ -24,7 +24,17 @@
       "Bash(sleep 4 && cd /Users/barakgoren/Desktop/frontend/claude-code-test && node playwright-test.js 2>&1)",
       "Bash(npm test:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm search:*)",
+      "Bash(python3:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(node:*)"
     ]
   }
 }

@@ -15,5 +15,8 @@
     "build:web": "npm run build --workspace=apps/web",
     "build:admin": "npm run build --workspace=apps/admin",
     "test:report": "node scripts/test-and-report.mjs"
+  },
+  "dependencies": {
+    "node-pdf-parser": "^1.0.7"
   }
 }

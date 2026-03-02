@@ -41,6 +41,7 @@ model Company {
   timeline       ApplicationTimeline[]
   emailTemplates EmailTemplate[]
   emails         ApplicationEmail[]
+  rules          Rule[]
 }
 
 model User {
@@ -80,6 +81,7 @@ model Role {
   createdBy    User?         @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
   stages       Stage[]
   applications Application[]
+  rules        Rule[]
 }
 
 model Stage {
@@ -105,6 +107,7 @@ model Application {
   email          String?
   formData       Json     @default("{}")
   resumeS3Key    String?
+  extractedTexts Json     @default("{}")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -172,6 +175,20 @@ model EmailTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Rule {
+  id         Int      @id @default(autoincrement())
+  roleId     Int
+  companyId  Int
+  name       String
+  score      Int
+  conditions Json     @default("[]")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  role    Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 

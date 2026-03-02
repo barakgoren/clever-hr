@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Eye, Trash2, Download, Search } from 'lucide-react';
+import { Eye, Trash2, Download, Search, ArrowUpDown } from 'lucide-react';
 import { applicationService } from '@/services/application.service';
 import { roleService } from '@/services/role.service';
 import { Card } from '@/components/ui/card';
@@ -26,6 +26,7 @@ export default function ApplicationsPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [scoreSort, setScoreSort] = useState<'asc' | 'desc' | null>(null);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   const { data: applications = [], isLoading } = useQuery({
@@ -52,7 +53,7 @@ export default function ApplicationsPage() {
   });
 
   const filtered = useMemo(() => {
-    return applications.filter((app) => {
+    const result = applications.filter((app) => {
       const fullName = String(app.formData?.full_name ?? '').toLowerCase();
       const email = String(app.formData?.email ?? '').toLowerCase();
       const phone = String(app.formData?.phone ?? '').toLowerCase();
@@ -64,7 +65,15 @@ export default function ApplicationsPage() {
       const matchesRole = roleFilter === 'all' || String(app.roleId) === roleFilter;
       return matchesSearch && matchesRole;
     });
-  }, [applications, search, roleFilter]);
+    if (scoreSort) {
+      result.sort((a, b) => {
+        const sa = (a as typeof a & { score?: number }).score ?? 0;
+        const sb = (b as typeof b & { score?: number }).score ?? 0;
+        return scoreSort === 'desc' ? sb - sa : sa - sb;
+      });
+    }
+    return result;
+  }, [applications, search, roleFilter, scoreSort]);
 
   // Keep selection clean: remove IDs that are no longer in the filtered set
   useEffect(() => {
@@ -217,6 +226,16 @@ export default function ApplicationsPage() {
                   Stage
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  <button
+                    className="inline-flex items-center gap-1 hover:text-[var(--color-text-primary)] transition-colors"
+                    onClick={() => setScoreSort((s) => s === 'desc' ? 'asc' : 'desc')}
+                    title="Sort by score"
+                  >
+                    Score
+                    <ArrowUpDown className="h-3 w-3" />
+                  </button>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                   Applied Date
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
@@ -275,6 +294,17 @@ export default function ApplicationsPage() {
                       ) : (
                         <Badge variant="warning">Pending</Badge>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const score = (app as typeof app & { score?: number }).score;
+                        if (!score) return <span className="text-sm text-[var(--color-text-muted)]">—</span>;
+                        return (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                            +{score}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
                       {formatDate(app.createdAt)}

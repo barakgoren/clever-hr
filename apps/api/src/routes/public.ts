@@ -1,5 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PDFParse } = require('pdf-parse') as { PDFParse: new (opts: { data: Buffer }) => { getText(): Promise<{ text: string }> } };
 import prisma from "../lib/prisma";
 import { applicationService } from "../services/application.service";
 import { AppError } from "../middleware/errorHandler";
@@ -64,6 +66,26 @@ router.post("/:companySlug/roles/:roleId/apply", upload.any(), async (req: Reque
     const file = files[0];
 
     const application = await applicationService.submit(role.id, company.id, formData, file ? { buffer: file.buffer, originalname: file.originalname, mimetype: file.mimetype } : undefined);
+
+    // Extract text from PDF files for keyword search
+    if (file) {
+      const isPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
+      let extractedText = '';
+      if (isPdf) {
+        try {
+          const parser = new PDFParse({ data: file.buffer });
+          const result = await parser.getText();
+          extractedText = result.text ?? '';
+        } catch {
+          // non-fatal: leave extractedText empty
+        }
+      }
+      const fieldname = file.fieldname ?? 'resume';
+      await prisma.application.update({
+        where: { id: application.id },
+        data: { extractedTexts: { [fieldname]: extractedText } },
+      });
+    }
 
     res.status(201).json({ success: true, data: { id: application.id } });
   } catch (err) {
