@@ -46,3 +46,4 @@ apps/web/test-results/
 # Test report artifacts (root level)
 test-results/
 test-report.html
+mock-resumes/

@@ -2,6 +2,7 @@
 
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 
 export interface BulkActionAvailability {
   enabled: boolean;
@@ -14,7 +15,7 @@ export interface BulkAction<T> {
   label: string;
   icon: React.ReactNode;
   /** Defaults to 'secondary'. Use 'danger' for destructive actions. */
-  variant?: 'default' | 'danger';
+  variant?: 'default' | 'danger' | 'ai';
   /**
    * Optional gate: receives the currently-selected items and returns whether
    * this action is available. Use this for actions that require all selected
@@ -70,19 +71,32 @@ export function BulkActionBar<T extends { id: number }>({
             ? action.available(selectedItems)
             : { enabled: true };
           const isDisabled = !availability.enabled || action.isPending;
+          const tooltipContent = !availability.enabled ? availability.reason : undefined;
 
-          return (
+          const button = (
             <Button
-              key={action.id}
-              variant={action.variant === 'danger' ? 'danger' : 'secondary'}
+              variant={action.variant || 'default'}
               size="sm"
               disabled={isDisabled}
-              title={!availability.enabled ? availability.reason : undefined}
               onClick={() => handleAction(action)}
             >
               {action.icon}
               {action.label}
             </Button>
+          );
+
+          if (tooltipContent) {
+            return (
+              <Tooltip key={action.id} content={tooltipContent}>
+                {button}
+              </Tooltip>
+            );
+          }
+
+          return (
+            <span key={action.id} className="inline-flex">
+              {button}
+            </span>
           );
         })}
 

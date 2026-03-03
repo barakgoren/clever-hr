@@ -1,75 +1,65 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { Eye, Trash2, Download, Search, ArrowUpDown } from 'lucide-react';
-import { applicationService } from '@/services/application.service';
-import { roleService } from '@/services/role.service';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { BulkActionBar, type BulkAction } from '@/components/BulkActionBar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { formatDate } from '@/lib/utils';
-import type { ApplicationWithRelations } from '@repo/shared';
+import { useState, useMemo, useRef, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import { Eye, Trash2, Download, Search, ArrowUpDown, Sparkles } from "lucide-react";
+import { applicationService } from "@/services/application.service";
+import { roleService } from "@/services/role.service";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BulkActionBar, type BulkAction } from "@/components/BulkActionBar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatDate } from "@/lib/utils";
+import type { ApplicationWithRelations } from "@repo/shared";
 
 export default function ApplicationsPage() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [scoreSort, setScoreSort] = useState<'asc' | 'desc' | null>(null);
+  const [scoreSort, setScoreSort] = useState<"asc" | "desc" | null>(null);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   const { data: applications = [], isLoading } = useQuery({
-    queryKey: ['applications'],
+    queryKey: ["applications"],
     queryFn: () => applicationService.list(),
   });
 
   const { data: roles = [] } = useQuery({
-    queryKey: ['roles'],
+    queryKey: ["roles"],
     queryFn: roleService.list,
   });
 
   const deleteMutation = useMutation({
     mutationFn: applicationService.delete,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['applications'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["applications"] }),
   });
 
   const deleteManyMutation = useMutation({
     mutationFn: applicationService.deleteMany,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
       setSelectedIds(new Set());
     },
   });
 
   const filtered = useMemo(() => {
     const result = applications.filter((app) => {
-      const fullName = String(app.formData?.full_name ?? '').toLowerCase();
-      const email = String(app.formData?.email ?? '').toLowerCase();
-      const phone = String(app.formData?.phone ?? '').toLowerCase();
-      const matchesSearch =
-        !search ||
-        fullName.includes(search.toLowerCase()) ||
-        email.includes(search.toLowerCase()) ||
-        phone.includes(search.toLowerCase());
-      const matchesRole = roleFilter === 'all' || String(app.roleId) === roleFilter;
+      const fullName = String(app.formData?.full_name ?? "").toLowerCase();
+      const email = String(app.formData?.email ?? "").toLowerCase();
+      const phone = String(app.formData?.phone ?? "").toLowerCase();
+      const matchesSearch = !search || fullName.includes(search.toLowerCase()) || email.includes(search.toLowerCase()) || phone.includes(search.toLowerCase());
+      const matchesRole = roleFilter === "all" || String(app.roleId) === roleFilter;
       return matchesSearch && matchesRole;
     });
     if (scoreSort) {
       result.sort((a, b) => {
         const sa = (a as typeof a & { score?: number }).score ?? 0;
         const sb = (b as typeof b & { score?: number }).score ?? 0;
-        return scoreSort === 'desc' ? sb - sa : sa - sb;
+        return scoreSort === "desc" ? sb - sa : sa - sb;
       });
     }
     return result;
@@ -120,13 +110,30 @@ export default function ApplicationsPage() {
 
   const bulkActions: BulkAction<ApplicationWithRelations>[] = [
     {
-      id: 'delete',
-      label: 'Delete',
+      id: "delete",
+      label: "Delete",
       icon: <Trash2 className="h-3.5 w-3.5" />,
-      variant: 'danger',
-      confirm: `Delete ${selectedIds.size} application${selectedIds.size === 1 ? '' : 's'}? This cannot be undone.`,
+      variant: "danger",
+      confirm: `Delete ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}? This cannot be undone.`,
       onAction: (items) => deleteManyMutation.mutateAsync(items.map((i) => i.id)),
       isPending: deleteManyMutation.isPending,
+    },
+    {
+      id: "compare",
+      label: "Compare",
+      icon: <Sparkles className="h-3.5 w-3.5" />,
+      variant: "ai",
+      confirm: `Are you sure you want to compare these ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}?`,
+      onAction: (items) => {
+        // TODO: Implement comparison logic using Anthropic's API. This should lead to a "comparison view" page UI that shows the applications on an accordion view, and an AI-generated with matching precentage for the application (INDIVIDUALLY, not comparing to the others) and a summary of the strong and weak points of each application, and finally a "best application overall" recommendation.
+      },
+      available: (items) => {
+        const allItemsHaveSameRoleId = items.every((i) => i.roleId === items[0].roleId);
+        return {
+          enabled: allItemsHaveSameRoleId,
+          reason: allItemsHaveSameRoleId ? undefined : "To Compare applications, they must all be of the same type",
+        };
+      },
     },
   ];
 
@@ -134,11 +141,7 @@ export default function ApplicationsPage() {
     <div className="space-y-5">
       {/* Top actions */}
       <div className="flex items-center justify-end">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => window.open(applicationService.exportUrl(), '_blank')}
-        >
+        <Button variant="secondary" size="sm" onClick={() => window.open(applicationService.exportUrl(), "_blank")}>
           <Download className="h-3.5 w-3.5" />
           Export
         </Button>
@@ -148,12 +151,10 @@ export default function ApplicationsPage() {
         {/* Table header */}
         <div className="border-b border-[var(--color-border)] px-5 py-4">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
-              All Applications
-            </h2>
+            <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">All Applications</h2>
           </div>
           <p className="text-xs text-[var(--color-text-muted)]">
-            {filtered.length} {filtered.length === 1 ? 'application' : 'applications'}
+            {filtered.length} {filtered.length === 1 ? "application" : "applications"}
           </p>
         </div>
 
@@ -161,13 +162,7 @@ export default function ApplicationsPage() {
         <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)]">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--color-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-white pl-9 pr-3 py-2 text-sm placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent"
-            />
+            <input type="text" placeholder="Search by name, email, or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-white pl-9 pr-3 py-2 text-sm placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent" />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-40">
@@ -194,89 +189,43 @@ export default function ApplicationsPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-sm font-medium text-[var(--color-text-primary)]">No applications found</p>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">
-              {search || roleFilter !== 'all'
-                ? 'Try adjusting your filters'
-                : 'Applications will appear here once submitted'}
-            </p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1">{search || roleFilter !== "all" ? "Try adjusting your filters" : "Applications will appear here once submitted"}</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-[var(--color-border)]">
                 <th className="w-10 px-4 py-3">
-                  <input
-                    ref={headerCheckboxRef}
-                    type="checkbox"
-                    className="rounded cursor-pointer"
-                    checked={allFilteredSelected}
-                    onChange={toggleAll}
-                  />
+                  <input ref={headerCheckboxRef} type="checkbox" className="rounded cursor-pointer" checked={allFilteredSelected} onChange={toggleAll} />
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">#</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Full name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Application Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Stage</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  #
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  Full name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  Application Type
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  Stage
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  <button
-                    className="inline-flex items-center gap-1 hover:text-[var(--color-text-primary)] transition-colors"
-                    onClick={() => setScoreSort((s) => s === 'desc' ? 'asc' : 'desc')}
-                    title="Sort by score"
-                  >
+                  <button className="inline-flex items-center gap-1 hover:text-[var(--color-text-primary)] transition-colors" onClick={() => setScoreSort((s) => (s === "desc" ? "asc" : "desc"))} title="Sort by score">
                     Score
                     <ArrowUpDown className="h-3 w-3" />
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  Applied Date
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                  Actions
-                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Applied Date</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
               {filtered.map((app) => {
-                const fullName = String(app.formData?.full_name ?? '—');
+                const fullName = String(app.formData?.full_name ?? "—");
                 const isSelected = selectedIds.has(app.id);
                 return (
-                  <tr
-                    key={app.id}
-                    className={`transition-colors ${
-                      isSelected
-                        ? 'bg-[var(--color-brand-50,#eff6ff)]'
-                        : 'hover:bg-[var(--color-surface-subtle)]'
-                    }`}
-                  >
+                  <tr key={app.id} className={`transition-colors ${isSelected ? "bg-[var(--color-brand-50,#eff6ff)]" : "hover:bg-[var(--color-surface-subtle)]"}`}>
                     <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        className="rounded cursor-pointer"
-                        checked={isSelected}
-                        onChange={() => toggleOne(app.id)}
-                      />
+                      <input type="checkbox" className="rounded cursor-pointer" checked={isSelected} onChange={() => toggleOne(app.id)} />
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">{app.id}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">
-                      {fullName}
-                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">{fullName}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-                        style={{ backgroundColor: `${app.role.color}1A`, color: app.role.color }}
-                      >
-                        <span
-                          className="h-1.5 w-1.5 rounded-full shrink-0"
-                          style={{ backgroundColor: app.role.color }}
-                        />
+                      <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: `${app.role.color}1A`, color: app.role.color }}>
+                        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: app.role.color }} />
                         {app.role.name}
                       </span>
                     </td>
@@ -299,16 +248,10 @@ export default function ApplicationsPage() {
                       {(() => {
                         const score = (app as typeof app & { score?: number }).score;
                         if (!score) return <span className="text-sm text-[var(--color-text-muted)]">—</span>;
-                        return (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                            +{score}
-                          </span>
-                        );
+                        return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">+{score}</span>;
                       })()}
                     </td>
-                    <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
-                      {formatDate(app.createdAt)}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">{formatDate(app.createdAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <Link href={`/dashboard/applications/${app.id}`}>
@@ -322,7 +265,7 @@ export default function ApplicationsPage() {
                           title="Delete"
                           className="text-[var(--color-danger)] hover:bg-[var(--color-danger-bg)]"
                           onClick={() => {
-                            if (confirm('Delete this application?')) {
+                            if (confirm("Delete this application?")) {
                               deleteMutation.mutate(app.id);
                             }
                           }}
@@ -339,12 +282,7 @@ export default function ApplicationsPage() {
         )}
       </Card>
 
-      <BulkActionBar
-        selectedIds={selectedIds}
-        allItems={applications}
-        actions={bulkActions}
-        onClearSelection={() => setSelectedIds(new Set())}
-      />
+      <BulkActionBar selectedIds={selectedIds} allItems={applications} actions={bulkActions} onClearSelection={() => setSelectedIds(new Set())} />
     </div>
   );
 }
