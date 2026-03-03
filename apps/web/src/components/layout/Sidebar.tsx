@@ -63,7 +63,7 @@ export function Sidebar() {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-            CV Manager
+            Clever<span className="bg-linear-to-r from-purple-500 to-purple-800 text-transparent bg-clip-text">HR</span>
           </p>
           <p className="text-xs text-[var(--color-text-secondary)] truncate">
             {company?.name ?? "..."}

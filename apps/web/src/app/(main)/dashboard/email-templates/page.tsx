@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Mail, X, Loader2, Check, Sparkles } from "lucide-react";
 import { emailService, EmailTemplate } from "@/services/email.service";
+import { aiService } from "@/services/ai.service";
+import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,9 +22,33 @@ const EMPTY_FORM: TemplateFormState = { name: "", subject: "", body: "" };
 
 function TemplateForm({ initial, onSave, onCancel, isPending }: { initial: TemplateFormState; onSave: (v: TemplateFormState) => void; onCancel: () => void; isPending: boolean }) {
   const [form, setForm] = useState<TemplateFormState>(initial);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
   const set = (k: keyof TemplateFormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
   const valid = form.name.trim() && form.subject.trim() && form.body.trim();
+
+  const handleAutoFill = async () => {
+    if (!form.name.trim()) return;
+    abortRef.current = new AbortController();
+    setIsGenerating(true);
+    setForm((prev) => ({ ...prev, body: "" }));
+    try {
+      await aiService.generateEmailTemplate(form.name, form.subject, (chunk) => setForm((prev) => ({ ...prev, body: prev.body + chunk })), abortRef.current.signal);
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        setForm((prev) => ({ ...prev, body: prev.body || "" }));
+      }
+    } finally {
+      setIsGenerating(false);
+      abortRef.current = null;
+    }
+  };
+
+  const handleCancel = () => {
+    abortRef.current?.abort();
+    onCancel();
+  };
 
   return (
     <div className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-4">
@@ -44,16 +70,27 @@ function TemplateForm({ initial, onSave, onCancel, isPending }: { initial: Templ
         </p>
       </div>
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
+        <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isPending}>
           <X className="h-3.5 w-3.5" />
           Cancel
         </Button>
-        {/* TODO: A Button that generates content using AI according to the template name (mandatory) and subject (optional) */}
-        <Button variant="ai" size="sm" onClick={() => {}} disabled={isPending}>
-          <Sparkles className="h-3.5 w-3.5" />
-          Auto-fill
-        </Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={!valid || isPending}>
+        <Tooltip
+          content={
+            isPending || isGenerating || !form.name.trim() ? (
+              <>
+                <span className="font-semibold">Template name</span> is required. <span className="font-semibold">Subject</span> is optional but improves the result.
+              </>
+            ) : (
+              "Use AI to auto-fill the email body based on the template name and subject."
+            )
+          }
+        >
+          <Button variant="ai" size="sm" onClick={handleAutoFill} disabled={isPending || isGenerating || !form.name.trim()}>
+            {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {isGenerating ? "Generating…" : "Auto-fill"}
+          </Button>
+        </Tooltip>
+        <Button size="sm" onClick={() => onSave(form)} disabled={!valid || isPending || isGenerating}>
           {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           Save Template
         </Button>

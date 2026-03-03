@@ -18,5 +18,8 @@
   },
   "dependencies": {
     "node-pdf-parser": "^1.0.7"
+  },
+  "devDependencies": {
+    "pdfkit": "^0.17.2"
   }
 }
