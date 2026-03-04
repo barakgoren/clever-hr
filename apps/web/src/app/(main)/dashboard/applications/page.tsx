@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Eye, Trash2, Download, Search, ArrowUpDown, Sparkles } from "lucide-react";
 import { applicationService } from "@/services/application.service";
 import { roleService } from "@/services/role.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ import type { ApplicationWithRelations } from "@repo/shared";
 
 export default function ApplicationsPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const isUltimate = user?.plan === 'ultimate';
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -125,12 +128,16 @@ export default function ApplicationsPage() {
       label: "Compare",
       icon: <Sparkles className="h-3.5 w-3.5" />,
       variant: "ai",
-      confirm: `Are you sure you want to compare these ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}?`,
+      badge: !isUltimate ? "Ultimate" : undefined,
+      confirm: isUltimate ? `Are you sure you want to compare these ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}?` : undefined,
       onAction: (items) => {
         const ids = items.map((i) => i.id).join(',');
         router.push(`/dashboard/applications/compare?ids=${ids}`);
       },
       available: (items) => {
+        if (!isUltimate) {
+          return { enabled: false, reason: "AI-powered comparison is available on the Ultimate plan." };
+        }
         const allItemsHaveSameRoleId = items.every((i) => i.roleId === items[0].roleId);
         return {
           enabled: allItemsHaveSameRoleId,

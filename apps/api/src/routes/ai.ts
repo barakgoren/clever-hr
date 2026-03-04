@@ -42,6 +42,11 @@ function bestCacheKey(ids: number[]): string {
 // Streams an email template body based on name + subject
 router.post("/email-template", requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    if (req.user!.plan !== 'ultimate') {
+      res.status(403).json({ success: false, error: 'This feature requires the Ultimate plan' });
+      return;
+    }
+
     const { name, subject } = req.body as { name?: string; subject?: string };
     if (!name?.trim()) {
       res.status(400).json({ success: false, error: "Template name is required" });
@@ -90,6 +95,11 @@ Requirements:
 // Streams NDJSON — one candidate result per line, then a "best" line
 router.post("/compare", requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    if (req.user!.plan !== 'ultimate') {
+      res.status(403).json({ success: false, error: 'This feature requires the Ultimate plan' });
+      return;
+    }
+
     const { applicationIds, forceRefresh = false } = req.body as { applicationIds?: unknown; forceRefresh?: boolean };
 
     if (!Array.isArray(applicationIds) || applicationIds.length < 2 || applicationIds.length > 10 || !applicationIds.every((id) => typeof id === "number")) {

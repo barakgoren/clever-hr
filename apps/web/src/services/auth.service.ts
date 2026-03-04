@@ -1,7 +1,7 @@
 import { apiClient, setAccessToken, clearAccessToken } from '@/lib/api';
 import type { User } from '@repo/shared';
 
-type AuthUser = Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'>;
+type AuthUser = Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'> & { plan: 'team' | 'ultimate' };
 
 interface LoginResponse {
   accessToken: string;

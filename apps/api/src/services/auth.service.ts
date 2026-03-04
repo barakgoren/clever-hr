@@ -6,7 +6,7 @@ import { AppError } from '../middleware/errorHandler';
 
 export const authService = {
   async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email }, include: { company: { select: { plan: true } } } });
     if (!user) throw new AppError(401, 'Invalid email or password');
 
     const valid = await bcrypt.compare(password, user.passwordHash);
@@ -16,6 +16,7 @@ export const authService = {
       userId: user.id,
       companyId: user.companyId,
       role: user.role as 'admin' | 'user',
+      plan: user.company.plan as 'team' | 'ultimate',
     });
 
     const refreshTokenValue = crypto.randomBytes(40).toString('hex');
@@ -28,14 +29,14 @@ export const authService = {
     return {
       accessToken,
       refreshToken: refreshTokenValue,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, companyId: user.companyId },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, companyId: user.companyId, plan: user.company.plan },
     };
   },
 
   async refresh(refreshTokenValue: string) {
     const stored = await prisma.refreshToken.findUnique({
       where: { token: refreshTokenValue },
-      include: { user: true },
+      include: { user: { include: { company: { select: { plan: true } } } } },
     });
 
     if (!stored || stored.expiresAt < new Date()) {
@@ -50,6 +51,7 @@ export const authService = {
       userId: stored.user.id,
       companyId: stored.user.companyId,
       role: stored.user.role as 'admin' | 'user',
+      plan: stored.user.company.plan as 'team' | 'ultimate',
     });
 
     const newRefreshToken = crypto.randomBytes(40).toString('hex');
@@ -68,6 +70,7 @@ export const authService = {
         email: stored.user.email,
         role: stored.user.role,
         companyId: stored.user.companyId,
+        plan: stored.user.company.plan,
       },
     };
   },

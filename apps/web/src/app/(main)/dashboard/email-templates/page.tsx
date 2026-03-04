@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Mail, X, Loader2, Check, Sparkles } from "lucide-react";
 import { emailService, EmailTemplate } from "@/services/email.service";
 import { aiService } from "@/services/ai.service";
+import { useAuth } from "@/contexts/AuthContext";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,8 @@ interface TemplateFormState {
 const EMPTY_FORM: TemplateFormState = { name: "", subject: "", body: "" };
 
 function TemplateForm({ initial, onSave, onCancel, isPending }: { initial: TemplateFormState; onSave: (v: TemplateFormState) => void; onCancel: () => void; isPending: boolean }) {
+  const { user } = useAuth();
+  const isUltimate = user?.plan === 'ultimate';
   const [form, setForm] = useState<TemplateFormState>(initial);
   const [isGenerating, setIsGenerating] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -76,7 +79,9 @@ function TemplateForm({ initial, onSave, onCancel, isPending }: { initial: Templ
         </Button>
         <Tooltip
           content={
-            isPending || isGenerating || !form.name.trim() ? (
+            !isUltimate ? (
+              "AI auto-fill is available on the Ultimate plan."
+            ) : isPending || isGenerating || !form.name.trim() ? (
               <>
                 <span className="font-semibold">Template name</span> is required. <span className="font-semibold">Subject</span> is optional but improves the result.
               </>
@@ -85,9 +90,14 @@ function TemplateForm({ initial, onSave, onCancel, isPending }: { initial: Templ
             )
           }
         >
-          <Button variant="ai" size="sm" onClick={handleAutoFill} disabled={isPending || isGenerating || !form.name.trim()}>
+          <Button variant="ai" size="sm" onClick={handleAutoFill} disabled={!isUltimate || isPending || isGenerating || !form.name.trim()} className="relative">
             {isGenerating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             {isGenerating ? "Generating…" : "Auto-fill"}
+            {!isUltimate && (
+              <span className="absolute -top-2 -right-2 ml-1 rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 leading-none">
+                Ultimate
+              </span>
+            )}
           </Button>
         </Tooltip>
         <Button size="sm" onClick={() => onSave(form)} disabled={!valid || isPending || isGenerating}>

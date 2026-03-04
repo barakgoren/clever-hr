@@ -4,7 +4,9 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { authService } from '@/services/auth.service';
 import type { User } from '@repo/shared';
 
-export interface AuthUser extends Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'> {}
+export interface AuthUser extends Pick<User, 'id' | 'name' | 'email' | 'role' | 'companyId'> {
+  plan: 'team' | 'ultimate';
+}
 
 interface AuthContextValue {
   user: AuthUser | null;

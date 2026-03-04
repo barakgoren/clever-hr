@@ -27,6 +27,8 @@ export interface BulkAction<T> {
   confirm?: string;
   onAction: (selectedItems: T[]) => void | Promise<void>;
   isPending?: boolean;
+  /** If set, renders a small badge pill inside the button (e.g. "Ultimate"). */
+  badge?: string;
 }
 
 interface BulkActionBarProps<T extends { id: number }> {
@@ -82,6 +84,11 @@ export function BulkActionBar<T extends { id: number }>({
             >
               {action.icon}
               {action.label}
+              {action.badge && (
+                <span className="absolute -top-2 -right-2 ml-1 rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 leading-none">
+                  {action.badge}
+                </span>
+              )}
             </Button>
           );
 

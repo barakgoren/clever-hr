@@ -7,6 +7,7 @@ export interface AccessTokenPayload {
   userId: number;
   companyId: number;
   role: 'admin' | 'user';
+  plan: 'team' | 'ultimate';
 }
 
 export function signAccessToken(payload: AccessTokenPayload): string {
