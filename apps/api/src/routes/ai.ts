@@ -2,6 +2,23 @@ import { Response, NextFunction, Router } from "express";
 import Anthropic from "@anthropic-ai/sdk";
 import { requireAuth, AuthRequest } from "../middleware/auth";
 import prisma from "../lib/prisma";
+import fs from "fs";
+import path from "path";
+
+const LOG_FILE = path.resolve(process.cwd(), "../../output/api/ai-prompts.log");
+
+function logPrompt(label: string, system: string, user: string): void {
+  const entry = [
+    `${"─".repeat(72)}`,
+    `[${new Date().toISOString()}] ${label}`,
+    `── SYSTEM ──`,
+    system,
+    `── USER ──`,
+    user,
+    "",
+  ].join("\n");
+  fs.appendFileSync(LOG_FILE, entry, "utf8");
+}
 
 const router = Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -128,8 +145,9 @@ router.post("/compare", requireAuth, async (req: AuthRequest, res: Response, nex
           const label = field?.label ?? key;
           candidateLines.push(`${label}: ${value}`);
         }
-        if (extractedTexts.resume) {
-          candidateLines.push(`Resume text: ${extractedTexts.resume}`);
+        const allExtractedText = Object.values(extractedTexts).filter(Boolean).join("\n");
+        if (allExtractedText) {
+          candidateLines.push(`Resume text: ${allExtractedText}`);
         }
 
         const prompt = `Role: ${role.name}
@@ -139,10 +157,13 @@ Requirements: ${role.requirements.join(", ") || "N/A"}
 Candidate data:
 ${candidateLines.join("\n")}`;
 
+        const candidateSystem = 'You are an HR analyst. Evaluate how well this candidate matches the role requirements.\nRespond ONLY with valid JSON: {"matchPercent":<0-100>,"strengths":["..."],"weaknesses":["..."],"summary":"one sentence"}\nNo extra text. matchPercent should reflect fit against the role independently.';
+        logPrompt(`/compare — candidate (app ${app.id})`, candidateSystem, prompt);
+
         const message = await anthropic.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: 512,
-          system: 'You are an HR analyst. Evaluate how well this candidate matches the role requirements.\nRespond ONLY with valid JSON: {"matchPercent":<0-100>,"strengths":["..."],"weaknesses":["..."],"summary":"one sentence"}\nNo extra text. matchPercent should reflect fit against the role independently.',
+          system: candidateSystem,
           messages: [{ role: "user", content: prompt }],
         });
 
@@ -167,11 +188,15 @@ ${candidateLines.join("\n")}`;
     if (!best) {
       const summaryText = summaries.map((s) => `ID ${s.applicationId}: ${s.matchPercent}% match — ${s.summary}`).join("\n");
 
+      const bestSystem = 'You are an HR analyst. Given these candidate analyses, pick the best overall match.\nRespond ONLY with valid JSON: {"applicationId":<id>,"reason":"one concise sentence"}';
+      const bestUser = `Role: ${role.name}\n\nCandidates:\n${summaryText}\n\nWhich candidate is the best overall match?`;
+      logPrompt(`/compare — best-match`, bestSystem, bestUser);
+
       const bestMessage = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 256,
-        system: 'You are an HR analyst. Given these candidate analyses, pick the best overall match.\nRespond ONLY with valid JSON: {"applicationId":<id>,"reason":"one concise sentence"}',
-        messages: [{ role: "user", content: `Role: ${role.name}\n\nCandidates:\n${summaryText}\n\nWhich candidate is the best overall match?` }],
+        system: bestSystem,
+        messages: [{ role: "user", content: bestUser }],
       });
 
       const bestText = bestMessage.content[0].type === "text" ? bestMessage.content[0].text : "";

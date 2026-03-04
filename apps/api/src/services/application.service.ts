@@ -141,11 +141,10 @@ export const applicationService = {
     await prisma.application.deleteMany({ where: { id: { in: ids } } });
   },
 
-  async getFilePresignedUrl(id: number, companyId: number, fieldId: string) {
+  async getFilePresignedUrl(id: number, companyId: number, _fieldId: string) {
     const app = await this.getById(id, companyId);
-    const key = fieldId === "resume" ? app.resumeS3Key : null;
-    if (!key) throw new AppError(404, "File not found");
-    return s3Service.getPresignedUrl(key);
+    if (!app.resumeS3Key) throw new AppError(404, "File not found");
+    return s3Service.getPresignedUrl(app.resumeS3Key);
   },
 
   async exportCsv(companyId: number): Promise<string> {
