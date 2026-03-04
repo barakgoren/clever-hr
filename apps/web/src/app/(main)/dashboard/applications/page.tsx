@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, Trash2, Download, Search, ArrowUpDown, Sparkles } from "lucide-react";
 import { applicationService } from "@/services/application.service";
 import { roleService } from "@/services/role.service";
@@ -16,6 +17,7 @@ import { formatDate } from "@/lib/utils";
 import type { ApplicationWithRelations } from "@repo/shared";
 
 export default function ApplicationsPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -125,7 +127,8 @@ export default function ApplicationsPage() {
       variant: "ai",
       confirm: `Are you sure you want to compare these ${selectedIds.size} application${selectedIds.size === 1 ? "" : "s"}?`,
       onAction: (items) => {
-        // TODO: Implement comparison logic using Anthropic's API. This should lead to a "comparison view" page UI that shows the applications on an accordion view, and an AI-generated with matching precentage for the application (INDIVIDUALLY, not comparing to the others) and a summary of the strong and weak points of each application, and finally a "best application overall" recommendation.
+        const ids = items.map((i) => i.id).join(',');
+        router.push(`/dashboard/applications/compare?ids=${ids}`);
       },
       available: (items) => {
         const allItemsHaveSameRoleId = items.every((i) => i.roleId === items[0].roleId);
