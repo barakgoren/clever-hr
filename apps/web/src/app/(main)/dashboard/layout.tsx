@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { companyService } from '@/services/company.service';
+import { CommandPalette } from '@/components/CommandPalette';
 
 const PATH_TITLES: Array<[RegExp, string]> = [
   [/^\/dashboard\/applications\/\d+$/, ''],          // handled by application detail page
@@ -59,6 +60,18 @@ function DynamicTitle() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [commandOpen, setCommandOpen] = useState(false);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !user) router.replace('/login');
@@ -84,9 +97,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <DynamicTitle />
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden pl-[220px]">
-        <TopBar />
+        <TopBar onSearchOpen={() => setCommandOpen(true)} />
         <main className="relative flex-1 min-h-0 overflow-y-auto p-6">{children}</main>
       </div>
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );
 }

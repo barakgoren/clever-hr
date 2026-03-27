@@ -17,6 +17,7 @@ import emailTemplatesRoutes from "./routes/emailTemplates";
 import superAdminAuthRoutes from "./routes/superAdminAuth";
 import superAdminRoutes from "./routes/superAdmin";
 import aiRoutes from "./routes/ai";
+import searchRoutes from "./routes/search";
 import { errorHandler } from "./middleware/errorHandler";
 
 export const app = express();
@@ -58,6 +59,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/superadmin/auth", superAdminAuthRoutes);
 app.use("/api/superadmin", superAdminRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/search", searchRoutes);
 
 app.get("/api/health", (_req, res) => {
   console.log("Health check endpoint hit");

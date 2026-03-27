@@ -27,6 +27,8 @@ export type { SendEmailInput, CreateEmailTemplateInput, UpdateEmailTemplateInput
 export { createRuleSchema, updateRuleSchema } from './schemas/rule';
 export type { CreateRuleInput, UpdateRuleInput } from './schemas/rule';
 
+export type { SearchResult, SearchResultType } from './types/search';
+
 export type { SuperAdmin } from './types/superAdmin';
 export { createSuperAdminSchema, superAdminLoginSchema } from './schemas/superAdmin';
 export type { CreateSuperAdminInput } from './schemas/superAdmin';

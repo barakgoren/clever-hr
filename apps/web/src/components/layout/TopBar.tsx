@@ -1,10 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { companyService } from '@/services/company.service';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const PAGE_META: Record<string, { title: string; description: string }> = {
   '/dashboard':              { title: 'Dashboard',    description: "Here's what's happening with your applications." },
@@ -14,7 +15,11 @@ const PAGE_META: Record<string, { title: string; description: string }> = {
   '/dashboard/settings':     { title: 'Settings',     description: 'Manage your company and application settings' },
 };
 
-export function TopBar() {
+interface TopBarProps {
+  onSearchOpen?: () => void;
+}
+
+export function TopBar({ onSearchOpen }: TopBarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
 
@@ -44,6 +49,18 @@ export function TopBar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onSearchOpen}
+          className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+          aria-label="Search"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+        <kbd className="hidden md:inline-flex items-center gap-0.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-text-muted)]">
+          <span className="text-xs">⌘</span>K
+        </kbd>
         {company?.logoUrl && (
           <img
             src={company.logoUrl}

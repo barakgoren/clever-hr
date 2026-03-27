@@ -268,7 +268,10 @@ export default function ComparePage() {
       })
       .finally(() => setIsRunning(false));
 
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      startedRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, refreshKey]);
 
