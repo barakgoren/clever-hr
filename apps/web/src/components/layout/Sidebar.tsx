@@ -47,35 +47,38 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 flex w-[220px] flex-col border-r border-[var(--color-border)] z-30 shadow-[0_10px_30px_-20px_rgba(15,23,42,0.25)]">
+    <aside
+      className="fixed inset-y-0 left-0 flex w-[220px] flex-col z-30"
+      style={{ background: "var(--color-sidebar-bg)" }}
+    >
       {/* Brand */}
-    <div className="flex h-14 items-center gap-2 border-b border-[var(--color-border)] bg-white px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg shrink-0">
+      <div
+        className="flex h-14 items-center gap-2.5 px-5"
+        style={{ borderBottom: "1px solid var(--color-sidebar-border)" }}
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-brand-600)] shrink-0">
           {company?.logoUrl ? (
             <img
               src={company.logoUrl}
               alt={company.name}
-              className="h-6 w-6 rounded object-cover"
+              className="h-5 w-5 rounded object-cover"
             />
           ) : (
-            <Briefcase className="h-4 w-4 text-[var(--color-brand-600)]" />
+            <Briefcase className="h-3.5 w-3.5 text-white" />
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-            Clever<span className="bg-linear-to-r from-purple-500 to-purple-800 text-transparent bg-clip-text">HR</span>
+          <p className="text-sm font-semibold text-white truncate leading-none">
+            Claver<span className="text-[var(--color-brand-500)]">HR</span>
           </p>
-          <p className="text-xs text-[var(--color-text-secondary)] truncate">
-            {company?.name ?? "..."}
+          <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--color-sidebar-text)" }}>
+            {company?.name ?? "…"}
           </p>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
-        <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
-          Navigation
-        </p>
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/dashboard"
@@ -86,13 +89,28 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-colors border border-transparent",
+                "flex items-center gap-2.5 rounded-[var(--radius)] px-3 py-2 text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-[var(--color-sidebar-active)] text-[var(--color-brand-700)] border-[var(--color-brand-100)] shadow-sm"
-                  : "text-[var(--color-sidebar-text)] hover:bg-[var(--color-sidebar-hover)] hover:text-[var(--color-brand-700)]",
+                  ? "text-white"
+                  : "hover:text-white"
               )}
+              style={
+                active
+                  ? { background: "var(--color-sidebar-active)", color: "white" }
+                  : { color: "var(--color-sidebar-text)" }
+              }
+              onMouseEnter={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = "var(--color-sidebar-hover)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }
+              }}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0" style={{ opacity: active ? 1 : 0.7 }} />
               {label}
             </Link>
           );
@@ -101,26 +119,37 @@ export function Sidebar() {
 
       {/* User footer */}
       {user && (
-        <div className="border-t border-[var(--color-border)] bg-white/70 backdrop-blur-sm p-3">
-          <div className="flex items-center gap-3 rounded-[var(--radius)] px-2 py-2">
+        <div className="p-3" style={{ borderTop: "1px solid var(--color-sidebar-border)" }}>
+          <div className="flex items-center gap-2.5 px-2 py-1.5 mb-1">
             <Avatar name={user.name || user.email} size="sm" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+              <p className="text-sm font-medium text-white truncate leading-none">
                 {user.name || "User"}
               </p>
-              <p className="text-xs text-[var(--color-text-secondary)] truncate">{user.email}</p>
+              <p className="text-[11px] truncate mt-0.5" style={{ color: "var(--color-sidebar-text)" }}>
+                {user.email}
+              </p>
             </div>
             {user.role === "admin" && (
-              <span className="shrink-0 rounded-full bg-[var(--color-brand-100)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--color-brand-700)]">
+              <span className="shrink-0 rounded-full bg-[var(--color-brand-900)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--color-brand-200)]">
                 Admin
               </span>
             )}
           </div>
           <button
             onClick={handleLogout}
-            className="mt-1 flex w-full items-center gap-3 rounded-[var(--radius)] px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-sidebar-hover)] hover:text-[var(--color-brand-700)] transition-colors"
+            className="flex w-full items-center gap-2.5 rounded-[var(--radius)] px-3 py-2 text-sm transition-all duration-150"
+            style={{ color: "var(--color-sidebar-text)" }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "var(--color-sidebar-hover)";
+              (e.currentTarget as HTMLElement).style.color = "white";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.color = "var(--color-sidebar-text)";
+            }}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4 opacity-70" />
             Sign out
           </button>
         </div>

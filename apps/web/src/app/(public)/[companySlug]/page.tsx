@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MapPin, Briefcase, ArrowRight } from "lucide-react";
+import { MapPin, Briefcase, ArrowRight, Clock } from "lucide-react";
 import { serverFetch } from "@/lib/serverFetch";
 import { roleTypeLabel } from "@/lib/utils";
 import type { Role } from "@repo/shared";
@@ -57,75 +57,109 @@ export default async function CompanyJobBoardPage({
   const activeRoles = roles.filter((r) => r.isActive);
 
   return (
-    <div className="min-h-screen max-w-4xl mx-auto">
-      {/* Hero / Header */}
-      {company.heroImageUrl && (
-        <div
-          className="h-40 w-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${company.heroImageUrl})` }}
-        />
-      )}
-
-      {/* Company identity */}
-      <div className="w-32 h-32 -mt-16 ms-8 bg-background bg-(--color-surface-subtle) p-2 rounded-xl">
-        {company.logoUrl ? (
-          <img
-            src={company.logoUrl}
-            alt={company.name}
-            className="h-full w-full rounded-xl object-cover shadow-md"
+    <div className="min-h-screen bg-[#f8fafc]">
+      {/* Hero banner */}
+      <div className="relative">
+        {company.heroImageUrl ? (
+          <div
+            className="h-48 w-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${company.heroImageUrl})` }}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center rounded-xl bg-slate-100">
-            <Briefcase className="h-8 w-8 text-slate-400" />
+          <div className="h-32 w-full bg-gradient-to-r from-indigo-600 to-indigo-500" />
+        )}
+
+        {/* Company logo overlapping the banner */}
+        <div className="absolute bottom-0 translate-y-1/2 left-1/2 -translate-x-1/2">
+          <div className="h-20 w-20 rounded-2xl border-4 border-white bg-white shadow-lg overflow-hidden">
+            {company.logoUrl ? (
+              <img
+                src={company.logoUrl}
+                alt={company.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-indigo-50">
+                <Briefcase className="h-8 w-8 text-indigo-400" />
+              </div>
+            )}
           </div>
+        </div>
+      </div>
+
+      {/* Company info */}
+      <div className="text-center pt-14 pb-6 px-4">
+        <h1 className="text-2xl font-bold text-slate-900">{company.name}</h1>
+        {company.description && (
+          <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+            {company.description}
+          </p>
         )}
       </div>
 
-      {/* Jobs list */}
-      <div className="mx-auto px-10 py-10 pb-20">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-6">
-          Current Openings
-        </h2>
+      {/* Jobs section */}
+      <div className="max-w-2xl mx-auto px-4 pb-20">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-sm font-semibold text-slate-900">
+            Open Positions
+            {activeRoles.length > 0 && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                {activeRoles.length}
+              </span>
+            )}
+          </h2>
+        </div>
 
         {activeRoles.length === 0 ? (
-          <p className="text-sm text-slate-500">No open positions at this time.</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center">
+            <Briefcase className="mx-auto h-8 w-8 text-slate-300 mb-3" />
+            <p className="text-sm font-medium text-slate-500">No open positions right now</p>
+            <p className="text-xs text-slate-400 mt-1">Check back soon for new opportunities</p>
+          </div>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div className="space-y-3">
             {activeRoles.map((role) => (
-              <div key={role.id} className="py-5 flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <Link
-                    href={`/${companySlug}/${role.id}`}
-                    className="text-base font-semibold text-blue-600 hover:underline"
-                  >
+              <Link
+                key={role.id}
+                href={`/${companySlug}/${role.id}`}
+                className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all duration-150"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">
                     {role.name}
-                  </Link>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                  </p>
+                  <div className="mt-1 flex items-center gap-3 flex-wrap">
                     {role.location && (
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 text-xs text-slate-500">
                         <MapPin className="h-3 w-3" />
                         {role.location}
                       </span>
                     )}
-                    {role.seniorityLevel && <span>{role.seniorityLevel}</span>}
-                    <span>{roleTypeLabel(role.type)}</span>
+                    {role.seniorityLevel && (
+                      <span className="text-xs text-slate-500">{role.seniorityLevel}</span>
+                    )}
+                    <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                      {roleTypeLabel(role.type)}
+                    </span>
                   </div>
                   {role.description && (
-                    <p className="mt-2 text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                    <p className="mt-2 text-xs text-slate-500 line-clamp-1 leading-relaxed">
                       {role.description}
                     </p>
                   )}
                 </div>
-                <Link
-                  href={`/${companySlug}/${role.id}`}
-                  className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 whitespace-nowrap"
-                >
-                  Apply <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
+                <div className="shrink-0 ml-4 flex items-center gap-2 text-indigo-600">
+                  <span className="text-xs font-medium hidden group-hover:inline">Apply</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </div>
+              </Link>
             ))}
           </div>
         )}
+
+        <p className="mt-10 text-center text-xs text-slate-400">
+          Powered by <span className="font-medium">Claver HR</span>
+        </p>
       </div>
     </div>
   );

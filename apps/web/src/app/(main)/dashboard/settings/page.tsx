@@ -26,7 +26,7 @@ function ImageUploadBox({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+      <p className="text-sm font-medium text-[var(--color-text-secondary)]">
         {label}
       </p>
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] overflow-hidden w-40 h-40 bg-[var(--color-surface-subtle)] relative flex items-center justify-center">
@@ -133,7 +133,7 @@ function CompanyTab({ company }: { company: Company }) {
           />
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="company-description" className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+            <label htmlFor="company-description" className="text-sm font-medium text-[var(--color-text-secondary)]">
               Description
             </label>
             <textarea
@@ -149,11 +149,8 @@ function CompanyTab({ company }: { company: Company }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] flex items-center gap-1">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]">
               Admin users
-              <span className="normal-case font-normal text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
-                IDs only
-              </span>
             </label>
             <p className="text-xs text-[var(--color-text-muted)]">
               Select which users can administer the company.
@@ -177,11 +174,6 @@ function CompanyTab({ company }: { company: Company }) {
                 </label>
               ))}
             </div>
-            {selectedAdminIds.length > 0 && (
-              <p className="text-xs text-[var(--color-text-muted)]">
-                Selected user IDs: {selectedAdminIds.join(', ')}
-              </p>
-            )}
           </div>
 
           <Button

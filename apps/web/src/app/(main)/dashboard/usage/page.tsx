@@ -44,13 +44,10 @@ export default function UsagePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">Usage</h1>
-        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
-          Current plan: <span className="font-medium text-[var(--color-brand-600)]">{planLabel}</span>
-        </p>
-      </div>
+    <div className="space-y-4">
+      <p className="text-sm text-[var(--color-text-muted)]">
+        Current plan: <span className="font-medium text-[var(--color-brand-600)]">{planLabel}</span>
+      </p>
 
       {/* Emails this month */}
       <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-5 space-y-3">

@@ -8,11 +8,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
 const PAGE_META: Record<string, { title: string; description: string }> = {
-  '/dashboard':              { title: 'Dashboard',    description: "Here's what's happening with your applications." },
-  '/dashboard/applications': { title: 'Applications', description: 'Manage and review all job applications' },
-  '/dashboard/templates':    { title: 'Templates',    description: 'Manage your templates' },
-  '/dashboard/users':        { title: 'Users',        description: 'Manage company users and their permissions' },
-  '/dashboard/settings':     { title: 'Settings',     description: 'Manage your company and application settings' },
+  '/dashboard':                    { title: 'Dashboard',       description: "Here's what's happening with your applications." },
+  '/dashboard/applications':       { title: 'Applications',    description: 'Manage and review all job applications' },
+  '/dashboard/templates':          { title: 'Templates',       description: 'Create and manage job role templates' },
+  '/dashboard/users':              { title: 'Users',           description: 'Manage company users and their permissions' },
+  '/dashboard/email-templates':    { title: 'Email Templates', description: 'Manage email templates for candidate communication' },
+  '/dashboard/usage':              { title: 'Usage',           description: 'Monitor your plan usage and limits' },
+  '/dashboard/settings':           { title: 'Settings',        description: 'Manage your company and application settings' },
 };
 
 interface TopBarProps {
@@ -37,13 +39,10 @@ export function TopBar({ onSearchOpen }: TopBarProps) {
     PAGE_META['/dashboard'];
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-[var(--color-border)] bg-white px-6">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-white px-6 z-10">
       <div className="min-w-0">
-        <h1 className="text-base font-semibold text-[var(--color-text-primary)] leading-none">
+        <h1 className="text-lg font-semibold text-[var(--color-text-primary)] leading-none tracking-tight">
           {meta.title}
-          {company?.name && (
-            <span className="ml-0 text-[var(--color-text-muted)] font-normal"> </span>
-          )}
         </h1>
         <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">{meta.description}</p>
       </div>

@@ -98,7 +98,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden pl-[220px]">
         <TopBar onSearchOpen={() => setCommandOpen(true)} />
-        <main className="relative flex-1 min-h-0 overflow-y-auto p-6">{children}</main>
+        <main className="relative flex-1 min-h-0 overflow-y-auto p-6">
+          <div className="animate-fade-in-up">{children}</div>
+        </main>
       </div>
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>

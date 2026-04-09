@@ -29,10 +29,12 @@
   --color-danger:      #dc2626;
 
   /* ── Sidebar ─────────────────────────────────────────────────── */
-  --color-sidebar-bg:      #f8fafc;
-  --color-sidebar-text:    #1f2937;
-  --color-sidebar-active:  #e0e7ff;
-  --color-sidebar-hover:   #e2e8f0;
+  --color-sidebar-bg:           #111827;
+  --color-sidebar-border:       rgba(255,255,255,0.08);
+  --color-sidebar-text:         #9ca3af;
+  --color-sidebar-text-active:  #ffffff;
+  --color-sidebar-active:       rgba(99,102,241,0.2);
+  --color-sidebar-hover:        rgba(255,255,255,0.06);
 
   /* ── Typography ──────────────────────────────────────────────── */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;

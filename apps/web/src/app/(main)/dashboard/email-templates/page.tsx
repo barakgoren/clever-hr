@@ -57,16 +57,16 @@ function TemplateForm({ initial, onSave, onCancel, isPending }: { initial: Templ
     <div className="space-y-3 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">Template Name</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">Template Name</label>
           <Input value={form.name} onChange={set("name")} placeholder="e.g. Interview Invite" />
         </div>
         <div>
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">Subject</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">Subject</label>
           <Input value={form.subject} onChange={set("subject")} placeholder="Email subject…" />
         </div>
       </div>
       <div>
-        <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">Body</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">Body</label>
         <Textarea value={form.body} onChange={set("body")} rows={6} placeholder={"Hi {{candidateName}},\n\nWrite your template body here…"} className="resize-none font-mono text-sm" />
         <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
           Available variables: <code>{"{{candidateName}}"}</code>, <code>{"{{roleName}}"}</code>, <code>{"{{companyName}}"}</code>
@@ -142,12 +142,8 @@ export default function EmailTemplatesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">Email Templates</h1>
-          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">Reusable templates for candidate communication</p>
-        </div>
+      {/* Header actions */}
+      <div className="flex items-center justify-end">
         {!showNewForm && (
           <Button size="sm" onClick={() => setShowNewForm(true)}>
             <Plus className="h-4 w-4" />

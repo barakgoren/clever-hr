@@ -197,7 +197,7 @@ export default function UsersPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[var(--color-text-muted)]">Username</span>
-                  <span className="text-xs font-mono text-[var(--color-text-primary)]">{u.username}</span>
+                  <span className="text-xs text-[var(--color-text-primary)]">{u.username}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs flex items-center gap-1 text-[var(--color-text-muted)]">
@@ -267,7 +267,7 @@ export default function UsersPage() {
               required={!editing}
             />
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">
                 Role
               </label>
               <Select

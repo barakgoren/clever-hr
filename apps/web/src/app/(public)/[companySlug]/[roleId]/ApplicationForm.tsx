@@ -21,21 +21,21 @@ function FormField({
   placeholder?: string;
   options?: string[];
 }) {
-  const inputClass =
-    'w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent';
+  const baseInput =
+    'w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent focus:bg-white transition-colors';
 
   if (type === 'textarea') {
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <label className="block text-sm font-medium text-slate-700">
-          {label} {required && <span className="text-red-500">*</span>}
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
         </label>
         <textarea
           name={id}
           required={required}
           placeholder={placeholder}
           rows={3}
-          className={`${inputClass} resize-y`}
+          className={`${baseInput} resize-y`}
         />
       </div>
     );
@@ -43,10 +43,16 @@ function FormField({
 
   if (type === 'checkbox') {
     return (
-      <div className="flex items-center gap-2">
-        <input type="checkbox" name={id} id={id} required={required} className="rounded" />
-        <label htmlFor={id} className="text-sm font-medium text-slate-700">
-          {label} {required && <span className="text-red-500">*</span>}
+      <div className="flex items-center gap-2.5">
+        <input
+          type="checkbox"
+          name={id}
+          id={id}
+          required={required}
+          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+        />
+        <label htmlFor={id} className="text-sm text-slate-700">
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
         </label>
       </div>
     );
@@ -54,16 +60,14 @@ function FormField({
 
   if (type === 'select' && options) {
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <label className="block text-sm font-medium text-slate-700">
-          {label} {required && <span className="text-red-500">*</span>}
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
         </label>
-        <select name={id} required={required} className={inputClass}>
+        <select name={id} required={required} className={baseInput}>
           <option value="">Select…</option>
           {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
+            <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
       </div>
@@ -72,32 +76,37 @@ function FormField({
 
   if (type === 'file') {
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <label className="block text-sm font-medium text-slate-700">
-          {label} {required && <span className="text-red-500">*</span>}
+          {label}{required && <span className="ml-0.5 text-red-500">*</span>}
         </label>
-        <input
-          type="file"
-          name={id}
-          required={required}
-          accept=".pdf,.doc,.docx"
-          className="w-full text-sm text-slate-500 file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-medium hover:file:bg-slate-200 cursor-pointer"
-        />
+        <div className="relative rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors cursor-pointer">
+          <input
+            type="file"
+            name={id}
+            required={required}
+            accept=".pdf,.doc,.docx"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          <p className="text-sm text-slate-500">
+            Click to upload <span className="text-indigo-600 font-medium">PDF, DOC, DOCX</span>
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <label className="block text-sm font-medium text-slate-700">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label}{required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       <input
         type={type}
         name={id}
         required={required}
         placeholder={placeholder}
-        className={inputClass}
+        className={baseInput}
       />
     </div>
   );
@@ -140,20 +149,20 @@ export function ApplicationForm({
 
   if (submitted) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="h-14 w-14 rounded-full bg-green-100 flex items-center justify-center mb-4">
-          <svg className="h-7 w-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+          <svg className="h-7 w-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-slate-800">Application Submitted!</h2>
-        <p className="text-sm text-slate-500 mt-2">
-          Thank you for applying to {role.name} at {companyName}. We'll be in touch soon.
+        <h2 className="text-base font-semibold text-slate-800">Application Submitted!</h2>
+        <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+          Thanks for applying to <strong>{role.name}</strong> at {companyName}. We'll be in touch.
         </p>
         <Link href={`/${companySlug}`}>
-          <Button variant="secondary" size="sm" className="mt-6">
-            View More Jobs
-          </Button>
+          <button className="mt-5 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors">
+            ← View more jobs
+          </button>
         </Link>
       </div>
     );
@@ -174,16 +183,18 @@ export function ApplicationForm({
       ))}
 
       {error && (
-        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
+        <p className="rounded-xl bg-red-50 border border-red-100 px-3.5 py-2.5 text-sm text-red-600">
+          {error}
+        </p>
       )}
 
-      <Button
+      <button
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700 h-11 text-base"
         disabled={submitting}
+        className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold py-3 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {submitting ? 'Submitting…' : 'Submit Application'}
-      </Button>
+      </button>
     </form>
   );
 }

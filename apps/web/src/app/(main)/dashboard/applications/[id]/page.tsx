@@ -74,7 +74,7 @@ function FieldRow({
   if (!value) return null;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-0.5">
+      <p className="text-[11px] font-medium text-[var(--color-text-muted)] mb-0.5">
         {label}
       </p>
       <p className="text-sm text-[var(--color-text-primary)] flex items-center gap-1.5">
@@ -231,8 +231,6 @@ export default function ApplicationDetailPage() {
   );
 
   const fileFields = role?.customFields.filter((f) => f.type === "file") ?? [];
-  console.log({ role, application });
-
   const hasResume = application.resumeS3Key;
 
   const formatDateTime = (value: string) =>
@@ -244,9 +242,12 @@ export default function ApplicationDetailPage() {
       minute: "2-digit",
     }).format(new Date(value));
 
+  const score = (application as typeof application & { score?: number; breakdown?: Array<{ ruleId: number; ruleName: string; score: number; matched: boolean }> }).score;
+  const breakdown = (application as typeof application & { score?: number; breakdown?: Array<{ ruleId: number; ruleName: string; score: number; matched: boolean }> }).breakdown ?? [];
+
   return (
-    <div className="space-y-5">
-      {/* Back + actions */}
+    <div className="space-y-4">
+      {/* Top bar */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => router.back()}
@@ -257,11 +258,7 @@ export default function ApplicationDetailPage() {
         </button>
         <div className="flex items-center gap-2">
           {email && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setEmailModalOpen(true)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => setEmailModalOpen(true)}>
               <Mail className="h-3.5 w-3.5" />
               Email
             </Button>
@@ -277,545 +274,361 @@ export default function ApplicationDetailPage() {
         </div>
       </div>
 
-      {/* Applicant header */}
-      <Card>
-        <CardContent className="pt-5">
-          <div className="flex items-start gap-4">
-            <Avatar name={fullName} size="lg" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                  {fullName}
-                </h2>
-                <Badge variant="default">{application.role.name}</Badge>
-                {application.currentStage && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
-                    style={{
-                      backgroundColor: `${application.currentStage.color}1A`,
-                      color: application.currentStage.color,
-                    }}
-                  >
-                    {(() => {
-                      const Icon =
-                        STAGE_ICON_MAP[application.currentStage.icon] ?? Flag;
-                      return <Icon className="h-3.5 w-3.5" />;
-                    })()}
-                    {application.currentStage.name}
-                  </span>
-                )}
-                <span className="ml-auto text-xs text-[var(--color-text-muted)]">
-                  #{application.id}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-[var(--color-text-muted)] flex items-center gap-1">
-                <span>Applied {formatDate(application.createdAt)}</span>
-              </p>
-            </div>
-          </div>
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 items-start">
 
-          <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-[var(--color-border)]">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
-                Application Type
-              </p>
-              <p className="text-sm text-[var(--color-text-primary)] mt-0.5">
-                {application.role.name}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">
-                Last Updated
-              </p>
-              <p className="text-sm text-[var(--color-text-primary)] mt-0.5">
-                {new Intl.DateTimeFormat("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                }).format(new Date(application.updatedAt))}
-              </p>
-            </div>
-          </div>
+        {/* ── Left column: main content ── */}
+        <div className="space-y-4 min-w-0">
 
-          {/* Score card */}
-          {(() => {
-            const score = (application as typeof application & { score?: number; breakdown?: Array<{ ruleId: number; ruleName: string; score: number; matched: boolean }> }).score;
-            const breakdown = (application as typeof application & { score?: number; breakdown?: Array<{ ruleId: number; ruleName: string; score: number; matched: boolean }> }).breakdown ?? [];
-            if (score === undefined) return null;
-            return (
-              <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)]">Score</p>
-                    <p className="mt-0.5 flex items-center gap-2">
-                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold border ${score > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>
-                        {score > 0 ? `+${score}` : score}
-                      </span>
-                    </p>
+          {/* Candidate identity card */}
+          <Card>
+            <CardContent className="pt-5 pb-5">
+              <div className="flex items-center gap-4">
+                <Avatar name={fullName} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{fullName}</h2>
+                    <span className="text-xs text-[var(--color-text-muted)]">#{application.id}</span>
                   </div>
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                      style={{ backgroundColor: `${application.role.color}1A`, color: application.role.color }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: application.role.color }} />
+                      {application.role.name}
+                    </span>
+                    {application.currentStage ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
+                        style={{ backgroundColor: `${application.currentStage.color}1A`, color: application.currentStage.color }}
+                      >
+                        {(() => { const Icon = STAGE_ICON_MAP[application.currentStage!.icon] ?? Flag; return <Icon className="h-3 w-3" />; })()}
+                        {application.currentStage.name}
+                      </span>
+                    ) : (
+                      <Badge variant="warning">Pending</Badge>
+                    )}
+                    {score !== undefined && score > 0 && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                        +{score} pts
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-center gap-4 text-xs text-[var(--color-text-muted)]">
+                    {email && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />{email}
+                      </span>
+                    )}
+                    {phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />{phone}
+                      </span>
+                    )}
+                    <span>Applied {formatDate(application.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Application details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Application Details</CardTitle>
+              <p className="text-xs text-[var(--color-text-muted)]">Information provided by the candidate</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FieldRow label="Full Name" value={fullName} />
+              {email && <FieldRow label="Email" value={email} icon={<Mail className="h-3.5 w-3.5 text-[var(--color-brand-500)]" />} />}
+              {phone && <FieldRow label="Phone" value={phone} icon={<Phone className="h-3.5 w-3.5 text-[var(--color-brand-500)]" />} />}
+              {customFieldValues.map(([key, val]) => {
+                const fieldDef = role?.customFields.find((f) => f.id === key);
+                if (fieldDef?.type === "file") return null;
+                const label = fieldDef?.label ?? key;
+                const icon = fieldDef?.type === "url" ? <Globe className="h-3.5 w-3.5 text-[var(--color-brand-500)]" /> : undefined;
+                return <FieldRow key={key} label={label} value={String(val)} icon={icon} />;
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Resume / File fields */}
+          {(hasResume || fileFields.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Resume & Files</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fileFields.map((field) => (
+                  <div key={field.id} className="space-y-3">
+                    <div className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <FileText className="h-5 w-5 text-[var(--color-text-muted)]" />
+                        <div>
+                          <p className="text-sm font-medium text-[var(--color-text-primary)]">{field.label}</p>
+                          <p className="text-xs text-[var(--color-text-muted)]">PDF / DOC</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => handleOpenFile(field.id, "preview")} disabled={fileLoadingField === field.id}>
+                          <Eye className="h-3.5 w-3.5" />
+                          {previewField === field.id ? "Hide" : "Preview"}
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => handleOpenFile(field.id, "download")} disabled={fileLoadingField === field.id}>
+                          <Download className="h-3.5 w-3.5" />
+                          Download
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleOpenFile(field.id, "tab")} disabled={fileLoadingField === field.id} title="Open in new tab">
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    {previewField === field.id && previewUrl && (
+                      <div className="rounded-[var(--radius)] border border-[var(--color-border)] overflow-hidden">
+                        <iframe src={previewUrl} className="w-full" style={{ height: "70vh" }} title={`Preview — ${field.label}`} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {hasResume && fileFields.length === 0 && (
+                  <div className="rounded-[var(--radius)] border border-[var(--color-border)] px-4 py-3 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-[var(--color-text-muted)]" />
+                    <p className="text-sm text-[var(--color-text-muted)]">Resume file attached</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Email history */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Email History</CardTitle>
+              <p className="text-xs text-[var(--color-text-muted)]">Sent emails for this application</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {emailHistory.length === 0 ? (
+                <p className="text-sm text-[var(--color-text-muted)]">No emails sent yet.</p>
+              ) : (
+                emailHistory.map((mail) => {
+                  const isFailed = mail.status === "failed";
+                  const tone = isFailed
+                    ? { border: "border-red-100", glow: "shadow-[0_10px_30px_-18px_rgba(239,68,68,0.6)]", accent: "from-red-50 via-white to-white", chip: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500", label: "Failed", Icon: AlertTriangle }
+                    : { border: "border-emerald-100", glow: "shadow-[0_10px_30px_-18px_rgba(16,185,129,0.55)]", accent: "from-emerald-50 via-white to-white", chip: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", label: "Sent", Icon: MailCheck };
+
+                  const sentAt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(mail.createdAt));
+
+                  return (
+                    <div key={mail.id} className={`relative overflow-hidden rounded-[var(--radius)] bg-white ${tone.border} ring-1 ring-inset ring-white/50 ${tone.glow}`}>
+                      <div className={`absolute inset-0 bg-gradient-to-r ${tone.accent} opacity-90`} />
+                      <div className="relative p-4 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white shadow-sm">
+                            <tone.Icon className="h-4 w-4 text-[var(--color-text-primary)]" />
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">{mail.subject || "No subject"}</p>
+                              <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${tone.chip}`}>
+                                <span className={`h-2 w-2 rounded-full ${tone.dot}`} />{tone.label}
+                              </span>
+                              {mail.templateId && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-2 py-0.5 text-[11px] text-[var(--color-text-muted)]">
+                                  Template #{mail.templateId}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-[11px]">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700"><Mail className="h-3 w-3" /> {mail.to}</span>
+                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700"><Clock className="h-3 w-3" /> {sentAt}</span>
+                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700"><UserIcon className="h-3 w-3" /> {mail.sender?.name ?? "Unknown"}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-white/85 p-3 text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">{mail.body}</div>
+                        {mail.error && (
+                          <div className="inline-flex items-center gap-2 rounded-[var(--radius)] border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-700">
+                            <AlertTriangle className="h-3.5 w-3.5" />Error: {mail.error}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Right sidebar ── */}
+        <div className="space-y-4 lg:sticky lg:top-4">
+
+          {/* Pipeline stage */}
+          {stages.length > 0 && (
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <p className="text-xs font-medium text-[var(--color-text-muted)] mb-2">Pipeline Stage</p>
+                <Select
+                  value={application.currentStageId ? String(application.currentStageId) : "none"}
+                  onValueChange={(val) => stageMutation.mutate({ stageId: val === "none" ? null : Number(val) })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Not placed" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Not placed</SelectItem>
+                    {stages.map((s) => {
+                      const Icon = STAGE_ICON_MAP[s.icon] ?? Flag;
+                      return (
+                        <SelectItem key={s.id} value={String(s.id)}>
+                          <span className="inline-flex items-center gap-2">
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                            <Icon className="h-3.5 w-3.5" />
+                            {s.name}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Score */}
+          {score !== undefined && (
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-medium text-[var(--color-text-muted)]">Score</p>
                   {breakdown.length > 0 && (
                     <button
-                      className="flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                      className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center gap-0.5 transition-colors"
                       onClick={() => setShowBreakdown((v) => !v)}
                     >
-                      Rule breakdown
-                      {showBreakdown ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      Breakdown {showBreakdown ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                     </button>
                   )}
                 </div>
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-bold border ${score > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)] border-[var(--color-border)]"}`}>
+                  {score > 0 ? `+${score}` : score}
+                </span>
                 {showBreakdown && breakdown.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {breakdown.map((r) => (
                       <div key={r.ruleId} className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${r.matched ? 'bg-emerald-500' : 'bg-[var(--color-text-muted)]'}`} />
+                          <span className={`h-2 w-2 rounded-full ${r.matched ? "bg-emerald-500" : "bg-[var(--color-text-muted)]"}`} />
                           <span className="text-sm text-[var(--color-text-primary)]">{r.ruleName}</span>
                         </div>
-                        <span className={`text-xs font-semibold ${r.matched ? 'text-emerald-600' : 'text-[var(--color-text-muted)]'}`}>
-                          {r.matched ? `+${r.score}` : '—'}
+                        <span className={`text-xs font-semibold ${r.matched ? "text-emerald-600" : "text-[var(--color-text-muted)]"}`}>
+                          {r.matched ? `+${r.score}` : "—"}
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            );
-          })()}
-
-          {/* Stage selector */}
-          {stages.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-muted)] mb-1.5">
-                Pipeline Stage
-              </p>
-              <Select
-                value={
-                  application.currentStageId
-                    ? String(application.currentStageId)
-                    : "none"
-                }
-                onValueChange={(val) =>
-                  stageMutation.mutate({
-                    stageId: val === "none" ? null : Number(val),
-                  })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Not placed" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Not placed</SelectItem>
-                  {stages.map((s) => {
-                    const Icon = STAGE_ICON_MAP[s.icon] ?? Flag;
-                    return (
-                      <SelectItem key={s.id} value={String(s.id)}>
-                        <span className="inline-flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: s.color }}
-                          />
-                          <Icon className="h-3.5 w-3.5" />
-                          {s.name}
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Timeline / Milestones */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Timeline</CardTitle>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Add milestones to keep track of progress; adding a milestone also
-            updates the application stage.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {stages.length === 0 ? (
-            <p className="text-sm text-[var(--color-text-muted)]">
-              No stages defined for this role yet.
-            </p>
-          ) : (
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!timelineStageId) return;
-                addTimelineMutation.mutate({
-                  stageId: Number(timelineStageId),
-                  description: timelineDescription.trim(),
-                });
-              }}
-            >
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2 flex-1">
-                  <div className="flex-1">
-                    <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                      Stage
-                    </label>
-                    <Select
-                      value={timelineStageId}
-                      onValueChange={setTimelineStageId}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select stage" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stages.map((s) => {
-                          const Icon = STAGE_ICON_MAP[s.icon] ?? Flag;
-                          return (
-                            <SelectItem key={s.id} value={String(s.id)}>
-                              <span className="inline-flex items-center gap-2">
-                                <span
-                                  className="h-2.5 w-2.5 rounded-full"
-                                  style={{ backgroundColor: s.color }}
-                                />
-                                <Icon className="h-3.5 w-3.5" />
-                                {s.name}
-                              </span>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    type="submit"
-                    className="self-start mt-6"
-                    disabled={addTimelineMutation.isPending}
-                  >
-                    {addTimelineMutation.isPending
-                      ? "Adding…"
-                      : "Add Milestone"}
-                  </Button>
-                </div>
-                <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-                    Description
-                  </label>
+          {/* Timeline */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle>Timeline</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {stages.length === 0 ? (
+                <p className="text-sm text-[var(--color-text-muted)]">No stages defined for this role yet.</p>
+              ) : (
+                <form
+                  className="space-y-3 pb-4 border-b border-[var(--color-border)]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!timelineStageId) return;
+                    addTimelineMutation.mutate({ stageId: Number(timelineStageId), description: timelineDescription.trim() });
+                  }}
+                >
+                  <Select value={timelineStageId} onValueChange={setTimelineStageId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stages.map((s) => {
+                        const Icon = STAGE_ICON_MAP[s.icon] ?? Flag;
+                        return (
+                          <SelectItem key={s.id} value={String(s.id)}>
+                            <span className="inline-flex items-center gap-2">
+                              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                              <Icon className="h-3.5 w-3.5" />
+                              {s.name}
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                   <textarea
                     value={timelineDescription}
                     onChange={(e) => setTimelineDescription(e.target.value)}
-                    placeholder="Add notes for this milestone"
+                    placeholder="Add notes (optional)"
                     rows={2}
                     className="w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent"
                   />
-                </div>
-              </div>
-            </form>
-          )}
+                  <Button type="submit" size="sm" className="w-full" disabled={addTimelineMutation.isPending}>
+                    {addTimelineMutation.isPending ? "Adding…" : "Add Milestone"}
+                  </Button>
+                </form>
+              )}
 
-          {/* Vertical timeline */}
-          <div className="space-y-4">
-            {(application.timeline ?? []).length === 0 ? (
-              <p className="text-sm text-[var(--color-text-muted)]">
-                No milestones yet.
-              </p>
-            ) : (
-              <div className="relative">
-                {(application.timeline ?? []).map((item, i) => {
-                  const stage = stages.find((s) => s.id === item.stageId);
-                  const color = stage?.color ?? "#22c55e";
-                  const Icon = stage
-                    ? (STAGE_ICON_MAP[stage.icon] ?? Flag)
-                    : Flag;
-                  const dateLabel = new Date(item.createdAt)
-                    .toISOString()
-                    .slice(0, 10);
-                  const isLast = i === (application.timeline ?? []).length - 1;
-                  return (
-                    <div
-                      key={item.id}
-                      className="relative flex gap-2 pb-6 last:pb-0"
-                    >
-                      <div className="text-xs font-medium text-[var(--color-text-muted)] leading-5">
-                        <div
-                          className="h-8 w-8 rounded-full border-2 flex items-center justify-center shadow-sm"
-                          style={{
-                            borderColor: color,
-                            backgroundColor: `${color}1A`,
-                          }}
-                        >
-                          <Icon className="h-4 w-4" style={{ color }} />
+              {(application.timeline ?? []).length === 0 ? (
+                <p className="text-sm text-[var(--color-text-muted)]">No milestones yet.</p>
+              ) : (
+                <div className="relative space-y-0">
+                  {(application.timeline ?? []).map((item, i) => {
+                    const stage = stages.find((s) => s.id === item.stageId);
+                    const color = stage?.color ?? "#22c55e";
+                    const Icon = stage ? (STAGE_ICON_MAP[stage.icon] ?? Flag) : Flag;
+                    const dateLabel = new Date(item.createdAt).toISOString().slice(0, 10);
+                    const isLast = i === (application.timeline ?? []).length - 1;
+                    return (
+                      <div key={item.id} className="relative flex gap-3 pb-5 last:pb-0">
+                        <div className="shrink-0">
+                          <div className="h-7 w-7 rounded-full border-2 flex items-center justify-center shadow-sm" style={{ borderColor: color, backgroundColor: `${color}1A` }}>
+                            <Icon className="h-3.5 w-3.5" style={{ color }} />
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <p>
-                          <span className="text-sm font-semibold text-[var(--color-text-primary)]">
-                            {stage?.name ?? "Stage updated"}
-                          </span>
-                          <span className="ml-2 text-xs text-[var(--color-text-muted)]">
-                            {dateLabel}
-                          </span>
-                        </p>
-                        {item.description && (
-                          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                      {!isLast && (
-                        <div className="absolute left-4 top-9 bottom-1 w-px bg-[var(--color-border)]" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Email history */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Email History</CardTitle>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Sent emails for this application
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {emailHistory.length === 0 ? (
-            <p className="text-sm text-[var(--color-text-muted)]">
-              No emails sent yet.
-            </p>
-          ) : (
-            emailHistory.map((mail) => {
-              const isFailed = mail.status === "failed";
-              const tone = isFailed
-                ? {
-                    border: "border-red-100",
-                    glow: "shadow-[0_10px_30px_-18px_rgba(239,68,68,0.6)]",
-                    accent: "from-red-50 via-white to-white",
-                    chip: "bg-red-100 text-red-700 border-red-200",
-                    dot: "bg-red-500",
-                    label: "Failed",
-                    Icon: AlertTriangle,
-                  }
-                : {
-                    border: "border-emerald-100",
-                    glow: "shadow-[0_10px_30px_-18px_rgba(16,185,129,0.55)]",
-                    accent: "from-emerald-50 via-white to-white",
-                    chip: "bg-emerald-100 text-emerald-700 border-emerald-200",
-                    dot: "bg-emerald-500",
-                    label: "Sent",
-                    Icon: MailCheck,
-                  };
-
-              const sentAt = new Intl.DateTimeFormat("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              }).format(new Date(mail.createdAt));
-
-              return (
-                <div
-                  key={mail.id}
-                  className={`relative overflow-hidden rounded-[var(--radius)] bg-white ${tone.border} ring-1 ring-inset ring-white/50 ${tone.glow}`}
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r ${tone.accent} opacity-90`}
-                  />
-                  <div className="relative p-4 space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white shadow-sm">
-                        <tone.Icon className="h-4 w-4 text-[var(--color-text-primary)]" />
-                      </div>
-
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-                            {mail.subject || "No subject"}
-                          </p>
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tone.chip}`}
-                          >
-                            <span
-                              className={`h-2 w-2 rounded-full ${tone.dot}`}
-                            />
-                            {tone.label}
-                          </span>
-                          {mail.templateId && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-2 py-0.5 text-[11px] text-[var(--color-text-muted)]">
-                              Template #{mail.templateId}
-                            </span>
-                          )}
+                        <div className="min-w-0 pt-0.5">
+                          <p className="text-sm font-semibold text-[var(--color-text-primary)]">{stage?.name ?? "Stage updated"}</p>
+                          <p className="text-xs text-[var(--color-text-muted)]">{dateLabel}</p>
+                          {item.description && <p className="mt-1 text-sm text-[var(--color-text-muted)]">{item.description}</p>}
                         </div>
-
-                        <div className="flex flex-wrap gap-2 text-[11px] text-[var(--color-text-muted)]">
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
-                            <Mail className="h-3 w-3" /> To {mail.to}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
-                            <Clock className="h-3 w-3" /> {sentAt}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
-                            <UserIcon className="h-3 w-3" />
-                            {mail.sender?.name ?? "Unknown sender"}
-                          </span>
-                          {mail.sender?.email && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-slate-700">
-                              {mail.sender.email}
-                            </span>
-                          )}
-                        </div>
+                        {!isLast && <div className="absolute left-3.5 top-8 bottom-1 w-px bg-[var(--color-border)]" />}
                       </div>
-                    </div>
-
-                    <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-white/85 p-3 text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">
-                      {mail.body}
-                    </div>
-
-                    {mail.error && (
-                      <div className="inline-flex items-center gap-2 rounded-[var(--radius)] border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-700">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        Error: {mail.error}
-                      </div>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Application Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Application Details</CardTitle>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Information provided by the candidate
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <FieldRow label="Full Name" value={fullName} />
-          {email && (
-            <FieldRow
-              label="Email"
-              value={email}
-              icon={
-                <Mail className="h-3.5 w-3.5 text-[var(--color-brand-500)]" />
-              }
-            />
-          )}
-          {phone && (
-            <FieldRow
-              label="Phone"
-              value={phone}
-              icon={
-                <Phone className="h-3.5 w-3.5 text-[var(--color-brand-500)]" />
-              }
-            />
-          )}
-          {customFieldValues.map(([key, val]) => {
-            const fieldDef = role?.customFields.find((f) => f.id === key);
-            if (fieldDef?.type === "file") return null; // handled below
-            const label = fieldDef?.label ?? key;
-            const icon =
-              fieldDef?.type === "url" ? (
-                <Globe className="h-3.5 w-3.5 text-[var(--color-brand-500)]" />
-              ) : undefined;
-            return (
-              <FieldRow
-                key={key}
-                label={label}
-                value={String(val)}
-                icon={icon}
-              />
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* Resume / File fields */}
-      {(hasResume || fileFields.length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Resume</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* If there's a resume via file field or the resumeS3Key */}
-            {fileFields.map((field) => (
-              <div key={field.id} className="space-y-3">
-                {/* File row */}
-                <div className="flex items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="h-5 w-5 text-[var(--color-text-muted)]" />
-                    <div>
-                      <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                        {field.label}
-                      </p>
-                      <p className="text-xs text-[var(--color-text-muted)]">
-                        PDF / DOC
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleOpenFile(field.id, "preview")}
-                      disabled={fileLoadingField === field.id}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      {previewField === field.id ? "Hide Preview" : "Preview"}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleOpenFile(field.id, "download")}
-                      disabled={fileLoadingField === field.id}
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleOpenFile(field.id, "tab")}
-                      disabled={fileLoadingField === field.id}
-                      title="Open in new tab"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Inline preview panel */}
-                {previewField === field.id && previewUrl && (
-                  <div className="rounded-[var(--radius)] border border-[var(--color-border)] overflow-hidden">
-                    <iframe
-                      src={previewUrl}
-                      className="w-full"
-                      style={{ height: "70vh" }}
-                      title={`Preview — ${field.label}`}
-                    />
-                  </div>
-                )}
+          {/* Meta */}
+          <Card>
+            <CardContent className="pt-4 pb-4 space-y-3">
+              <div>
+                <p className="text-xs text-[var(--color-text-muted)]">Applied</p>
+                <p className="text-sm text-[var(--color-text-primary)] mt-0.5">{formatDate(application.createdAt)}</p>
               </div>
-            ))}
-
-            {hasResume && fileFields.length === 0 && (
-              <div className="rounded-[var(--radius)] border border-[var(--color-border)] px-4 py-3 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-[var(--color-text-muted)]" />
-                <p className="text-sm text-[var(--color-text-muted)]">
-                  Resume file attached
-                </p>
+              <div>
+                <p className="text-xs text-[var(--color-text-muted)]">Last updated</p>
+                <p className="text-sm text-[var(--color-text-primary)] mt-0.5">{formatDateTime(application.updatedAt)}</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+
+        </div>
+      </div>
 
       {/* Email composer modal */}
       {email && (

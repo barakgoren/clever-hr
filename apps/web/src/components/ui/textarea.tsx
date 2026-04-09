@@ -12,7 +12,7 @@ export function Textarea({ label, error, id, className, ...props }: TextareaProp
       {label && (
         <label
           htmlFor={id}
-          className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]"
+          className="text-sm font-medium text-[var(--color-text-secondary)]"
         >
           {label}
         </label>

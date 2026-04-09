@@ -348,7 +348,7 @@ export function RoleForm({ role }: { role?: Role }) {
         <Input id="location" label="Location" placeholder="e.g. Tel Aviv, New York, Remote" value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Type</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]">Type</label>
           <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as RoleType }))} className="flex h-9 w-full items-center justify-between rounded-[var(--radius)] border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text-primary)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-500)] focus:border-transparent">
             {ROLE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -657,7 +657,7 @@ export function RoleForm({ role }: { role?: Role }) {
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{editingRuleId ? "Edit Rule" : "New Rule"}</h3>
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Rule Name</label>
+                  <label className="text-sm font-medium text-[var(--color-text-secondary)]">Rule Name</label>
                   <input
                     type="text"
                     value={ruleDraft.name}
@@ -667,7 +667,7 @@ export function RoleForm({ role }: { role?: Role }) {
                   />
                 </div>
                 <div className="w-28">
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Score</label>
+                  <label className="text-sm font-medium text-[var(--color-text-secondary)]">Score</label>
                   <input
                     type="number"
                     min="1"
@@ -682,7 +682,7 @@ export function RoleForm({ role }: { role?: Role }) {
               {/* Conditions */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Conditions (ALL must match)</label>
+                  <label className="text-sm font-medium text-[var(--color-text-secondary)]">Conditions (ALL must match)</label>
                   <Button
                     type="button"
                     variant="ghost"

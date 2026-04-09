@@ -128,7 +128,7 @@ export function EmailComposerModal({
           )}
           {templates.length > 0 && (
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">
                 <BookTemplate className="inline h-3.5 w-3.5 mr-1" />
                 Use saved template
               </label>
@@ -149,7 +149,7 @@ export function EmailComposerModal({
           )}
 
           <div>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">
               Subject
             </label>
             <Input
@@ -160,7 +160,7 @@ export function EmailComposerModal({
           </div>
 
           <div>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1 block">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)] mb-1 block">
               Message
             </label>
             <Textarea

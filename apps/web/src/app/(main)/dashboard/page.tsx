@@ -97,19 +97,19 @@ function StatCard({
 }) {
   return (
     <Card>
-      <CardContent className="pt-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
+      <CardContent className="pt-5 pb-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-[var(--color-text-muted)] truncate">
               {title}
             </p>
-            <p className="mt-1.5 text-3xl font-bold text-[var(--color-text-primary)]">
+            <p className="mt-2 text-2xl font-bold text-[var(--color-text-primary)] tabular-nums leading-none">
               {value}
             </p>
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">{sub}</p>
+            <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">{sub}</p>
           </div>
-          <div className={`rounded-lg p-2 ${iconColor}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`rounded-xl p-2.5 shrink-0 ${iconColor}`}>
+            <Icon className="h-4.5 w-4.5 h-[18px] w-[18px]" />
           </div>
         </div>
       </CardContent>
@@ -187,23 +187,17 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header actions */}
-      <div className="flex items-center justify-between">
-        <div />
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm">
-            Last 30 days
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              window.open(applicationService.exportUrl(), "_blank");
-            }}
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export
-          </Button>
-        </div>
+      <div className="flex items-center justify-end">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            window.open(applicationService.exportUrl(), "_blank");
+          }}
+        >
+          <Download className="h-3.5 w-3.5" />
+          Export
+        </Button>
       </div>
 
       {/* Stat cards */}
@@ -234,9 +228,13 @@ export default function DashboardPage() {
           iconColor="bg-amber-50 text-amber-500"
         />
         <StatCard
-          title="Total Candidates"
-          value={stats.total}
-          sub="+5% from last month"
+          title="This Month"
+          value={applications.filter((a) => {
+            const d = new Date(a.createdAt);
+            const now = new Date();
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          }).length}
+          sub="Applications in current month"
           icon={Users}
           iconColor="bg-purple-50 text-purple-500"
         />

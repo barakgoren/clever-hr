@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BulkActionBar, type BulkAction } from "@/components/BulkActionBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -190,6 +191,7 @@ export default function ApplicationsPage() {
         </div>
 
         {/* Table */}
+        <div className="overflow-x-auto">
         {isLoading ? (
           <div className="p-5 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -202,24 +204,24 @@ export default function ApplicationsPage() {
             <p className="text-xs text-[var(--color-text-muted)] mt-1">{search || roleFilter !== "all" ? "Try adjusting your filters" : "Applications will appear here once submitted"}</p>
           </div>
         ) : (
-          <table className="w-full">
+          <table className="w-full min-w-[720px]">
             <thead>
               <tr className="border-b border-[var(--color-border)]">
                 <th className="w-10 px-4 py-3">
                   <input ref={headerCheckboxRef} type="checkbox" className="rounded cursor-pointer" checked={allFilteredSelected} onChange={toggleAll} />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">#</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Full name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Application Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Stage</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">#</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">Full name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">Application Type</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">Stage</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                   <button className="inline-flex items-center gap-1 hover:text-[var(--color-text-primary)] transition-colors" onClick={() => setScoreSort((s) => (s === "desc" ? "asc" : "desc"))} title="Sort by score">
                     Score
                     <ArrowUpDown className="h-3 w-3" />
                   </button>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Applied Date</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">Applied Date</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-secondary)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
@@ -232,7 +234,12 @@ export default function ApplicationsPage() {
                       <input type="checkbox" className="rounded cursor-pointer" checked={isSelected} onChange={() => toggleOne(app.id)} />
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">{app.id}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--color-text-primary)]">{fullName}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5 whitespace-nowrap">
+                        <Avatar name={fullName} size="sm" />
+                        <span className="text-sm font-medium text-[var(--color-text-primary)]">{fullName}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium" style={{ backgroundColor: `${app.role.color}1A`, color: app.role.color }}>
                         <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: app.role.color }} />
@@ -290,6 +297,7 @@ export default function ApplicationsPage() {
             </tbody>
           </table>
         )}
+        </div>
       </Card>
 
       <BulkActionBar selectedIds={selectedIds} allItems={applications} actions={bulkActions} onClearSelection={() => setSelectedIds(new Set())} />

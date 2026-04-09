@@ -133,7 +133,7 @@ function CandidateCard({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {analysis.strengths.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 mb-2">Strengths</p>
+                      <p className="text-xs font-semibold text-emerald-700 mb-2">Strengths</p>
                       <ul className="space-y-1">
                         {analysis.strengths.map((s, i) => (
                           <li
@@ -151,7 +151,7 @@ function CandidateCard({
 
                   {analysis.weaknesses.length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-red-600 mb-2">Weaknesses</p>
+                      <p className="text-xs font-semibold text-red-600 mb-2">Weaknesses</p>
                       <ul className="space-y-1">
                         {analysis.weaknesses.map((w, i) => (
                           <li
