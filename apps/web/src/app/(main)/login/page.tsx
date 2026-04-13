@@ -60,7 +60,7 @@ export default function LoginPage() {
             Streamline your<br />hiring process
           </h1>
           <p className="text-white/70 text-base mb-10 leading-relaxed">
-            Manage applications, evaluate candidates, and make faster hiring decisions — all in one place.
+            Manage applications, assess candidates, and hire faster from one powerful platform.          
           </p>
 
           <div className="space-y-3.5">
