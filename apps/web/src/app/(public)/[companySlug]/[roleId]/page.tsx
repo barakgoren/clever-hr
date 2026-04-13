@@ -7,6 +7,7 @@ import { roleTypeLabel } from '@/lib/utils';
 import { ApplicationForm } from './ApplicationForm';
 import type { Role } from '@repo/shared';
 
+//
 interface CompanyPublicData {
   id: number;
   name: string;

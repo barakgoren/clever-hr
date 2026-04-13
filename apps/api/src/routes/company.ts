@@ -14,8 +14,6 @@ router.use(requireAuth);
 router.get("/", async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const company = await companyService.getById(req.user!.companyId);
-    console.log({ company });
-
     res.json({ success: true, data: company });
   } catch (err) {
     next(err);
