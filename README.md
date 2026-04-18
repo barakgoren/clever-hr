@@ -2,29 +2,47 @@
 
 A full-stack, multi-tenant HR management platform for managing job openings and candidate applications — built with Next.js, Express, and PostgreSQL.
 
----
 
-## Dashboard
-<img src="./screenshots/new/dashboard.png" alt="Dashboard" width="600px" height="350px" style="object-fit: contain;" />
+## Globals
+***Global search - search across all items in the system (roles, applications, users, email templates, etc.) with a single search bar.***
+<img src="./screenshots/new/global-search.png" alt="global-search" width="600px" height="350px" style="object-fit: contain;" />
 
-## Public Job Board
-<img src="./screenshots/new/company-public.png" alt="Public Job Board" width="600px" height="350px" style="object-fit: contain;" />
-<img src="./screenshots/new/company-public-2.png" alt="Public Job Board" width="450px" height="400px" style="object-fit: contain;" />
+***Global usage - Superadmin dashboard for monitoring overall companies usage of the infrastructure.***
+<img src="./screenshots/new/global-usage.png" alt="global-usage" width="600px" height="350px" style="object-fit: contain;" />
+
+***Feature restrictions - Plan based feature restrictions***
+
+<img src="./screenshots/new/plan-restrictions.png" alt="plan-restrictions" width="600px" height="400px" style="object-fit: contain;" />
+
+## Public company view
+<img src="./screenshots/new/public-company-page.png" alt="public-page" width="600px" height="350px" style="object-fit: contain;" />
+
+<img src="./screenshots/new/public-role-page.png" alt="public-role-page" width="600px" height="650px" style="object-fit: contain;" />
+
+## Role edit
+- ***Admin can edit role requirements - used to display requirements on the public role page and to rate applicants using AI scoring.***
+- ***Admin can edit form fields - used to collect custom information from applicants, e.g. "Years of experience", "LinkedIn profile", etc.***
+<img src="./screenshots/new/role-edit.png" alt="role-edit" width="600px" height="350px" style="object-fit: contain;" />
+
+### Pipeline stages - admin can add/edit/remove stages of applicant progression.
+<img src="./screenshots/new/role-piplines.png" alt="role-pipelines" width="850px" height="350px" style="object-fit: contain;" />
+
+### Scoring - systematically evaluate applicants scoring by conditions like PDF keywords matching, fields conditions, etc.**
+<img src="./screenshots/new/role-scoring.png" alt="role-scoring" width="850px" height="450px" style="object-fit: contain;" />
 
 ## Application Detail
-<img src="./screenshots/new/application.png" alt="Application Detail" width="600px" height="350px" style="object-fit: contain;" />
-<img src="./screenshots/new/application-2.png" alt="Application Detail" width="600px" height="350px" style="object-fit: contain;" />
-<img src="./screenshots/new/application-3.png" alt="Application Detail" width="600px" height="350px" style="object-fit: contain;" />
+***Application detail page with timeline of stage changes and email history. Admin can also send templated emails to candidates directly from this page.***
+<img src="./screenshots/new/applicant-page.png" alt="applicant-page" width="600px" height="350px" style="object-fit: contain;" />
+<img src="./screenshots/new/applicant-page-2.png" alt="applicant-page-2" width="600px" height="350px" style="object-fit: contain;" />
 
-## Template Editor
-<img src="./screenshots/new/role.png" alt="Role Editor" width="600px" height="350px" style="object-fit: contain;" />
-<img src="./screenshots/new/role-2.png" alt="Role Editor" width="600px" height="350px" style="object-fit: contain;" />
-<img src="./screenshots/new/role-3.png" alt="Role Editor" width="600px" height="350px" style="object-fit: contain;" />
-<img src="./screenshots/new/role-4.png" alt="Role Editor" width="600px" height="350px" style="object-fit: contain;" />
-
-
+## AI Analytics
+### Mechanism:
+- Analyze each applicant's strengths and weaknesses based on their application data and résumé content.
+- Use a predefined rubric (e.g., "Experience", "Skills", "Education") to evaluate candidates against the role's requirements.
+- Generate a comprehensive report for each applicant, highlighting areas of strength and weakness.
+- After analysis of all applicants, provide an overall summary of the candidate pool, identifying common strengths and weaknesses across all applicants and evaluating the overall fit of the candidate pool for the role.
+<img src="./screenshots/new/ai-analyze-page.png" alt="ai-analyze" width="800px" height="550px" style="object-fit: contain;" />
 ---
-
 ## Overview
 
 Claver HR lets companies publish job openings on a branded public page and track candidates through a fully customizable hiring pipeline.
